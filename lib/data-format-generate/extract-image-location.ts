@@ -2,6 +2,7 @@ import ExifParser from "exif-parser";
 import {
   getSheetData,
   updateSheetCell,
+  updateSheetRange,
   extractFileId,
   getImageBuffer,
 } from "@/lib/google-api/google-api";
@@ -52,27 +53,20 @@ export async function extractImageLocation(): Promise<ActionResponse> {
       const tags = result.tags;
 
       const rowNum = i + 1; // スプレッドシートは1-indexed
+      const lat = tags.GPSLatitude ?? "-";
+      const lng = tags.GPSLongitude ?? "-";
+      const dateTime = tags.DateTimeOriginal
+        ? new Date(tags.DateTimeOriginal * 1000).toISOString()
+        : "-";
+
+      // G〜K列を一括更新 (G:緯度, H:経度, I:日時, J:住所(空), K:処理済み)
+      await updateSheetRange("formatted_data", `G${rowNum}:K${rowNum}`, [
+        [lat, lng, dateTime, "", "TRUE"],
+      ]);
 
       if (tags.GPSLatitude && tags.GPSLongitude) {
-        await updateSheetCell("formatted_data", `G${rowNum}`, tags.GPSLatitude);
-        await updateSheetCell(
-          "formatted_data",
-          `H${rowNum}`,
-          tags.GPSLongitude,
-        );
-        updatedCount++;
-      } else {
-        await updateSheetCell("formatted_data", `G${rowNum}`, "-");
-        await updateSheetCell("formatted_data", `H${rowNum}`, "-");
         updatedCount++;
       }
-
-      if (tags.DateTimeOriginal) {
-        const dateTime = new Date(tags.DateTimeOriginal * 1000).toISOString();
-        await updateSheetCell("formatted_data", `I${rowNum}`, dateTime);
-      }
-
-      await updateSheetCell("formatted_data", `K${rowNum}`, "TRUE");
     } catch (error) {
       console.error(`画像処理エラー (行${i + 1}):`, error);
       // 次回実行時に再処理される（何度も処理してもTRUEが入らない行があるばあには手動で入れるのもあり）

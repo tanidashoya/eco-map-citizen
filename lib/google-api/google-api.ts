@@ -48,6 +48,7 @@ export async function appendSheetData(
   });
 }
 
+// セルを一部更新
 export async function updateSheetCell(
   sheetName: string,
   cell: string,
@@ -57,7 +58,21 @@ export async function updateSheetCell(
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!${cell}`,
     valueInputOption: "USER_ENTERED",
-    requestBody: { values: [[value]] },
+    requestBody: { values: [[value]] }, //rangeで指定したセルにvalueを更新
+  });
+}
+
+// 範囲を一括更新
+export async function updateSheetRange(
+  sheetName: string,
+  range: string,
+  values: (string | number | boolean)[][],
+): Promise<void> {
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${sheetName}!${range}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values }, //rangeで指定した範囲にvaluesを更新
   });
 }
 
@@ -88,10 +103,14 @@ export function extractFileId(url: string): string | null {
 }
 
 export async function getImageBuffer(fileId: string): Promise<Buffer> {
+  //DriveAPIで画像のバイナリデータを取得(Buffer型で返す)
+  //responseType: "arraybuffer" を指定すると、バイナリデータを ArrayBuffer として取得できる(デフォルトではJSON形式で返す)
   const response = await drive.files.get(
     { fileId, alt: "media" },
     { responseType: "arraybuffer" },
   );
+  //Buffer型に変換して返す（Node.js のバイナリデータ型）ArrayBuffer型をBuffer型に変換
+  //ArrayBuffer はブラウザ由来のバイナリ型で、Node.js では扱いづらい
   return Buffer.from(response.data as ArrayBuffer);
 }
 
