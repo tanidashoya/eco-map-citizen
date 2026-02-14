@@ -9,7 +9,7 @@ export default function PrivateLayout({
     <>
       <main className="max-w-7xl mx-auto lg:mt-8 flex flex-col justify-center items-center h-[calc(100vh-80px)] w-full">
         {children}
-        <Toaster />
+        <Toaster position="top-center" />
       </main>
     </>
   );

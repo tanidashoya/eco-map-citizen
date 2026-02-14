@@ -26,7 +26,7 @@ export default function Home() {
         </h1>
       </div>
       <div className="w-full mb-8 lg:mb-12">
-        <div className="h-[170px] lg:h-[200px] lg:w-[500px] w-[300px] bg-gray-100 border border-gray-300 rounded-md text-center flex items-center justify-center">
+        <div className="h-[170px] lg:h-[200px] lg:w-[500px] w-[300px] bg-gray-100 border border-gray-300 rounded-md shadow-md text-center flex items-center justify-center">
           <span className="text-lg font-medium">{logMessages}</span>
         </div>
       </div>

@@ -7,11 +7,9 @@ import type { ActionResponse } from "../../types/data-format-generate/types";
  */
 export async function transferToFormatted(): Promise<ActionResponse> {
   // 1. user_inputから全データを取得
-  const userInputAllData = await getSheetData("user_input", "A:G");
-  const userPendingData = userInputAllData.filter(
-    (row: string[]) => row[6] !== "TRUE",
-  );
-  if (userPendingData.length <= 1) {
+  const userInputAllData = await getSheetData("user_input", "A:F");
+
+  if (userInputAllData.length <= 1) {
     return {
       success: false,
       message: "転記するデータがありません",
@@ -26,19 +24,19 @@ export async function transferToFormatted(): Promise<ActionResponse> {
   // 3. 展開してformatted_dataに追記
   const newRows: string[][] = [];
 
-  for (const row of userPendingData.slice(1)) {
+  for (const row of userInputAllData.slice(1)) {
     const [timestamp, userName, userAddress, birthDate, imageUrls, comment] =
       row;
 
     // 既に転記済みならスキップ
+    //集合(Set)のhasメソッドで、timestampが既に存在するかどうかを確認（存在していたらスキップ）
     if (existingIds.has(timestamp)) continue;
-
+    //画像URLがない場合はスキップ
+    if (!imageUrls) continue;
     // 画像URLをカンマで分割して展開
-    const urls = (imageUrls || "")
-      .split(",")
-      .map((u) => u.trim())
-      .filter((u) => u);
+    const urls = imageUrls.split(",").map((url) => url.trim());
 
+    //繰り返し分の入れ子構造でnewRowsに追加
     for (const url of urls) {
       newRows.push([
         timestamp, // A: 元ID
@@ -64,6 +62,7 @@ export async function transferToFormatted(): Promise<ActionResponse> {
     };
   }
 
+  //指定したシート（formatted_data）にデータ（newRows）を追加
   await appendSheetData("formatted_data", newRows);
 
   return {

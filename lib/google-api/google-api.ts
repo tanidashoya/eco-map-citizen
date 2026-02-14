@@ -35,6 +35,7 @@ export async function getSheetData(
   return (response.data.values as string[][]) || [];
 }
 
+//指定したシート（sheetName）にデータ（values）を追加(append:指定した範囲の“最後”にデータを追加する)
 export async function appendSheetData(
   sheetName: string,
   values: (string | number | boolean)[][],
@@ -42,8 +43,8 @@ export async function appendSheetData(
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:Z`,
-    valueInputOption: "USER_ENTERED",
-    requestBody: { values },
+    valueInputOption: "USER_ENTERED", //USER_ENTERED:ユーザーが入力した値をそのまま追加
+    requestBody: { values }, //values:追加するデータ（string[][]型）
   });
 }
 
