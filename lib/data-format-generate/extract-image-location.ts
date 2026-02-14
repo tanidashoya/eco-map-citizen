@@ -1,7 +1,6 @@
 import ExifParser from "exif-parser";
 import {
   getSheetData,
-  updateSheetCell,
   updateSheetRange,
   extractFileId,
   getImageBuffer,
