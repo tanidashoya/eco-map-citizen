@@ -63,6 +63,7 @@ export async function transferToFormatted(): Promise<ActionResponse> {
   }
 
   //指定したシート（formatted_data）にデータ（newRows）を追加
+  //引数リレー方式の場合にはここではスプレッドシートに書き込まず次の関数（extractImageLocation）にnewRowsを引数で渡す
   await appendSheetData("formatted_data", newRows);
 
   return {

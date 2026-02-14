@@ -73,6 +73,10 @@ export async function clearSheet(
 
 // ========== ドライブ操作 ==========
 
+//画像URLからファイルIDを抽出
+//DriveのファイルID形式が2種類あるので、どちらの形式にも対応
+//パターン１:https://drive.google.com/open?id=1ABCxyz
+
 export function extractFileId(url: string): string | null {
   // ?id=xxx 形式
   let match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);

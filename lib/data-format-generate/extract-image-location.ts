@@ -16,8 +16,8 @@ export async function extractImageLocation(): Promise<ActionResponse> {
   const data = await getSheetData("formatted_data", "A:K");
   if (data.length <= 1) {
     return {
-      success: true,
-      message: "処理するデータがありません",
+      success: false,
+      message: "詳細情報を取得するデータがありません",
       processedCount: 0,
     };
   }
@@ -33,6 +33,7 @@ export async function extractImageLocation(): Promise<ActionResponse> {
     // 既に処理済み or 緯度がある場合はスキップ
     if (processed === "TRUE" || latitude) continue;
 
+    //画像URLからファイルIDを抽出(DriveAPIで画像を取得するときに必要)
     const fileId = extractFileId(imageUrl);
     if (!fileId) {
       // ファイルID取得失敗でも処理済みにする
@@ -41,9 +42,13 @@ export async function extractImageLocation(): Promise<ActionResponse> {
     }
 
     try {
+      //DriveAPIで画像のバイナリデータを取得(Buffer型で返す)
       const buffer = await getImageBuffer(fileId);
+      //画像ファイルに埋め込まれているメタデータを抽出
       const parser = ExifParser.create(buffer);
+      //バイナリデータを解析して、EXIFデータを抽出
       const result = parser.parse();
+      //result.tagsには緯度・経度・撮影時間などがオブジェクト形式で格納されている
       const tags = result.tags;
 
       const rowNum = i + 1; // スプレッドシートは1-indexed
@@ -56,6 +61,10 @@ export async function extractImageLocation(): Promise<ActionResponse> {
           tags.GPSLongitude,
         );
         updatedCount++;
+      } else {
+        await updateSheetCell("formatted_data", `G${rowNum}`, "-");
+        await updateSheetCell("formatted_data", `H${rowNum}`, "-");
+        updatedCount++;
       }
 
       if (tags.DateTimeOriginal) {
@@ -66,11 +75,10 @@ export async function extractImageLocation(): Promise<ActionResponse> {
       await updateSheetCell("formatted_data", `K${rowNum}`, "TRUE");
     } catch (error) {
       console.error(`画像処理エラー (行${i + 1}):`, error);
-      // エラーでも処理済みにする（再処理を防ぐ）
-      await updateSheetCell("formatted_data", `K${i + 1}`, "TRUE");
+      // 次回実行時に再処理される（何度も処理してもTRUEが入らない行があるばあには手動で入れるのもあり）
+      continue;
     }
   }
-
   return {
     success: true,
     message: `${updatedCount}件の位置情報を取得しました`,

@@ -1,7 +1,7 @@
 "use client";
 import { ArrowDown, Locate, MapPin } from "lucide-react";
 import CustomButton from "@/components/custom-button";
-import { dataFormmatLocate } from "@/app/actions/action-data-formmat";
+import { ActionDataFormmatLocate } from "@/app/actions/action-data-formmat";
 import { kmlMergeLocate } from "../actions/action-kml-merge-locate";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -10,7 +10,7 @@ export default function Home() {
   const [logMessages, setLogMessages] = useState("");
   const handleDataFormmatLocate = async () => {
     setLogMessages("詳細情報を取得しています...");
-    const result = await dataFormmatLocate();
+    const result = await ActionDataFormmatLocate();
     if (result?.success) {
       setLogMessages(`${result.message}`);
     } else {
