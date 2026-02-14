@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>地域自然環境マッピング（統合版）</name>
+    
+    <Placemark>
+      <name>日本、〒728-0022 広島県三次市西酒屋町酒屋コミュニティー</name>
+      <description><![CDATA[<img src="https://lh3.googleusercontent.com/d/1ZL6loQHChO5np659styTRTPaVpL1ARl9" width="300" style="max-width:100%; margin:5px 0;" /><br/><img src="https://lh3.googleusercontent.com/d/1_rWiUjMZUZ3ILa-slhQI5mkrTbc2rN7t" width="300" style="max-width:100%; margin:5px 0;" />
+      <p><strong>投稿者:</strong> 2件の投稿を統合</p>
+      <p><strong>コメント:</strong><br/>きれいな川が流れており多様な生物が暮らしています<br/>すごくいい</p>]]></description>
+      <Point>
+        <coordinates>132.8602998,34.7797425,0</coordinates>
+      </Point>
+    </Placemark>
+
+    <Placemark>
+      <name>Viva・Eu, 1217-1 東酒屋町 三次市 広島県 728-0023 日本</name>
+      <description><![CDATA[<img src="https://lh3.googleusercontent.com/d/1MmIknqT37M8VmLcP0dL8KNsmeEIK5CpM" width="300" style="max-width:100%; margin:5px 0;" />
+      <p><strong>投稿者:</strong> 1件の投稿を統合</p>
+      <p><strong>コメント:</strong><br/>すごくいい</p>]]></description>
+      <Point>
+        <coordinates>132.8621975,34.7807235,0</coordinates>
+      </Point>
+    </Placemark>
+  </Document>
+</kml>
