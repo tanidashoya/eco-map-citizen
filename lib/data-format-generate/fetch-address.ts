@@ -13,8 +13,8 @@ export async function fetchAddress(): Promise<ActionResponse> {
   const data = await getSheetData("formatted_data", "A:K");
   if (data.length <= 1) {
     return {
-      success: true,
-      message: "処理するデータがありません",
+      success: false,
+      message: "詳細情報を取得するデータがありません",
       processedCount: 0,
     };
   }
@@ -23,24 +23,28 @@ export async function fetchAddress(): Promise<ActionResponse> {
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    const latitude = parseFloat(row[6]); // G列: 緯度
-    const longitude = parseFloat(row[7]); // H列: 経度
+    const latStr = row[6];
+    const lngStr = row[7];
     const existingAddress = row[9]; // J列: 住所
-
+    if (latStr === "-" || lngStr === "-") continue;
+    const latitude = parseFloat(latStr); // G列: 緯度
+    const longitude = parseFloat(lngStr); // H列: 経度
     // 緯度経度がない or 既に住所がある場合はスキップ
     if (isNaN(latitude) || isNaN(longitude) || existingAddress) continue;
 
     try {
       const address = await reverseGeocode(latitude, longitude);
       if (address) {
-        await updateSheetCell("formatted_data", `J${i + 1}`, address);
+        await updateSheetCell("formatted_data", `J${i + 1}`, address); //ここでi+1としているのはdataの配列の行番号と一致させるため
         updatedCount++;
       }
-
       // API制限対策（100ms待機）
+      //短時間にGoogle Geocoding APIを叩きすぎるとエラーになるので100ms待機
       await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
       console.error(`住所取得エラー (行${i + 1}):`, error);
+      // 次の行へ。失敗した行は住所が空のままなので次回実行時に再処理される
+      continue;
     }
   }
 

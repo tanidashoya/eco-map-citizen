@@ -37,10 +37,10 @@ export async function extractImageLocation(): Promise<ActionResponse> {
     const fileId = extractFileId(imageUrl);
     if (!fileId) {
       // ファイルID取得失敗でも処理済みにする
-      await updateSheetRange("formatted_data", `G${i + 1}:K${i + 1}`, [
-        ["-", "-", "-", "-", "TRUE"],
-      ]);
-      updatedCount++;
+      // await updateSheetRange("formatted_data", `G${i + 1}:K${i + 1}`, [
+      //   ["-", "-", "-", "-", "TRUE"],
+      // ]);
+      // updatedCount++;
       continue;
     }
 

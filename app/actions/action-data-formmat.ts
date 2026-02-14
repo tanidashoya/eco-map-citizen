@@ -14,6 +14,9 @@ export async function ActionDataFormmatLocate() {
     return imageLocation;
   }
   const address = await fetchAddress();
+  if (!address.success) {
+    return address;
+  }
   const mergeLocations = await mergeNearbyLocations();
   console.log(details);
   console.log(imageLocation);
