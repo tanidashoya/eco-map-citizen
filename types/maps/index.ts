@@ -2,10 +2,11 @@ export interface Point {
   id: string;
   lat: number;
   lng: number;
-  name: string;
+  name?: string;
   imageUrl?: string;
   comment?: string;
   shootingDate?: string;
+  location?: string;
 }
 
 export interface MapWrapperProps {
@@ -18,10 +19,11 @@ export interface MapProps {
 }
 
 export interface ClusterItem {
-  name: string;
+  name?: string;
   imageUrl?: string;
   comment?: string;
   shootingDate?: string;
+  location?: string;
 }
 
 export interface MergedPoint {

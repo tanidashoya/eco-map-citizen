@@ -24,6 +24,7 @@ export function mergePoints(points: Point[]): MergedPoint[] {
           imageUrl: point.imageUrl,
           comment: point.comment,
           shootingDate: point.shootingDate,
+          location: point.location,
         });
 
         merged = true;
@@ -43,6 +44,7 @@ export function mergePoints(points: Point[]): MergedPoint[] {
             imageUrl: point.imageUrl,
             comment: point.comment,
             shootingDate: point.shootingDate,
+            location: point.location,
           },
         ],
       });

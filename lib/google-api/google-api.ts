@@ -164,6 +164,7 @@ export async function getMapPoints() {
   const idxImage = headers.indexOf("画像URL");
   const idxComment = headers.indexOf("この場所について");
   const idxDate = headers.indexOf("撮影日時");
+  const idxLocation = headers.indexOf("撮影住所");
 
   return dataRows
     .filter((row) => row[idxLat] && row[idxLng])
@@ -175,5 +176,6 @@ export async function getMapPoints() {
       imageUrl: convertDriveUrl(row[idxImage]),
       comment: row[idxComment] || "",
       shootingDate: row[idxDate] || "",
+      location: row[idxLocation] || "",
     }));
 }

@@ -48,7 +48,7 @@ export async function transferToFormatted(): Promise<ActionResponse> {
         "", // G: 緯度（後で取得）
         "", // H: 経度
         "", // I: 撮影日時
-        "", // J: 住所
+        "", // J: 撮影住所
         "FALSE", // K: 処理済みフラグ
       ]);
     }
