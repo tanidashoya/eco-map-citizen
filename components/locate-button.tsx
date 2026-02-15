@@ -10,6 +10,7 @@ export default function LocateButton() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLocate = () => {
+    setIsLoading(true);
     if (!navigator.geolocation) {
       alert("お使いのブラウザは位置情報に対応していません");
       return;
@@ -44,16 +45,19 @@ export default function LocateButton() {
         maximumAge: 0,
       },
     );
+    setIsLoading(false);
   };
 
   return (
-    <Button
-      onClick={handleLocate}
-      // disabled={isLoading}
-      className={`absolute z-999 lg:bottom-8 bottom-20 right-6 flex items-center gap-2 justify-center bg-blue-500 text-white hover:bg-blue-600 cursor-pointer`}
-    >
-      <Locate className="w-4 h-4" />
-      <span>現在地</span>
-    </Button>
+    <div className="absolute z-999 lg:bottom-8 bottom-20 right-6">
+      <Button
+        onClick={handleLocate}
+        // disabled={isLoading}
+        className="flex items-center gap-2 px-4 py-5 justify-center bg-blue-500 shadow-md text-white hover:bg-blue-600 cursor-pointer"
+      >
+        <Locate className="w-4 h-4" />
+        <span>現在地</span>
+      </Button>
+    </div>
   );
 }
