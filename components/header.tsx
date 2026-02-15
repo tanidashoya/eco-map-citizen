@@ -12,7 +12,7 @@ export default function Header() {
         <h1 className="text-lg font-bold">環境マッピング</h1>
       </div>
       <a href={GOOGLE_FORM_URL} target="_blank" rel="noopener noreferrer">
-        <Button className="bg-green-500 text-white border-none rounded-md cursor-pointer text-sm hover:bg-green-600">
+        <Button className="bg-green-500 text-white border-none rounded-md cursor-pointer text-sm hover:bg-green-600 shadow-md">
           <span>投稿する</span>
         </Button>
       </a>

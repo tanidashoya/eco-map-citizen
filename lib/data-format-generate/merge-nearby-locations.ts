@@ -9,10 +9,10 @@ import type {
 } from "../../types/data-format-generate/types";
 import { calculateDistance } from "../geo/calculate-distance";
 
-const MERGE_DISTANCE_METERS = 30;
+const MERGE_DISTANCE_METERS = 20;
 
 /**
- * ⑤ 30m圏内の地点を統合
+ * ⑤ 20m圏内の地点を統合
  * formatted_dataから近接する投稿をグループ化してmerge_location_dataに保存
  */
 export async function mergeNearbyLocations(): Promise<ActionResponse> {

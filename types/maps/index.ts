@@ -2,7 +2,7 @@ export interface Point {
   id: string;
   lat: number;
   lng: number;
-  // title: string;
+  name: string;
   imageUrl?: string;
   comment?: string;
   shootingDate?: string;
@@ -13,5 +13,20 @@ export interface MapWrapperProps {
 }
 
 export interface MapProps {
-  pointsWithImages: Point[];
+  mergedPoints: MergedPoint[];
+  initialCenter: [number, number];
+}
+
+export interface ClusterItem {
+  name: string;
+  imageUrl?: string;
+  comment?: string;
+  shootingDate?: string;
+}
+
+export interface MergedPoint {
+  id: string;
+  lat: number;
+  lng: number;
+  items: ClusterItem[];
 }

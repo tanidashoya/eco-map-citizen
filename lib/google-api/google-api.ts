@@ -158,7 +158,7 @@ export async function getMapPoints() {
 
   // ヘッダーからインデックスを取得
   const idxId = headers.indexOf("元ID");
-  // const idxName = headers.indexOf("ユーザー名");
+  const idxName = headers.indexOf("ユーザー名");
   const idxLat = headers.indexOf("緯度");
   const idxLng = headers.indexOf("経度");
   const idxImage = headers.indexOf("画像URL");
@@ -171,7 +171,7 @@ export async function getMapPoints() {
       id: row[idxId] || "",
       lat: parseFloat(row[idxLat]),
       lng: parseFloat(row[idxLng]),
-      // title: row[idxName] || "投稿",
+      name: row[idxName] || "匿名ユーザー",
       imageUrl: convertDriveUrl(row[idxImage]),
       comment: row[idxComment] || "",
       shootingDate: row[idxDate] || "",

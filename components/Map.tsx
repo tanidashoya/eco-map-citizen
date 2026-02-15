@@ -1,11 +1,20 @@
 "use client";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import LocateButton from "./locate-button";
-import { MapProps } from "@/types/maps";
+import { MapProps, MergedPoint } from "@/types/maps";
 import Header from "./header";
-import InitialLocation from "./initial-location";
+// import {
+//   Sheet,
+//   SheetContent,
+//   SheetDescription,
+//   SheetHeader,
+//   SheetTitle,
+// } from "@/components/ui/sheet";
+import { useState } from "react";
+import LocationSheet from "./location-sheet";
+import { useRouter } from "next/navigation";
 
 // Next.js環境でのアイコン修正
 //Leafletの内部関数：_getIconUrlを削除⇒「勝手に探すな」（これがなければLeafletが自動的にアイコンを探しに行ってしまう）【Next.js環境ではエラーが発生するため】
@@ -25,54 +34,42 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png", //影の画像
 });
 
-export default function Map({ pointsWithImages }: MapProps) {
-  const defaultCenter: [number, number] =
-    pointsWithImages.length > 0
-      ? [pointsWithImages[0].lat, pointsWithImages[0].lng]
-      : [34.78, 132.86]; // 広島付近（データに合わせて調整）
-
+export default function Map({ mergedPoints, initialCenter }: MapProps) {
+  const [selectedPoint, setSelectedPoint] = useState<MergedPoint | null>(null);
   const DEFAULT_ZOOM = 13;
+  const router = useRouter();
 
+  const handleClick = (point: MergedPoint) => {
+    console.log("clicked", point);
+    setSelectedPoint(point);
+    router.push(`/?location=${point.id}`);
+  };
   return (
-    <MapContainer
-      center={defaultCenter}
-      zoom={DEFAULT_ZOOM}
-      style={{ height: "100%", width: "100%" }}
-      className="flex flex-col justify-center items-center"
-    >
-      <InitialLocation />
-      <Header />
-      <TileLayer
-        attribution={process.env.NEXT_PUBLIC_MAP_ATTRIBUTION}
-        url={process.env.NEXT_PUBLIC_MAP_URL ?? ""}
-        className="map-minimal"
-      />
-      {pointsWithImages.map((point, index) => (
-        <Marker key={`${point.id}-${index}`} position={[point.lat, point.lng]}>
-          <Popup>
-            <div style={{ maxWidth: 200 }}>
-              {/* <strong>{point.title}</strong> */}
-              {point.shootingDate && (
-                <p style={{ fontSize: 12, color: "#666", margin: "4px 0" }}>
-                  {point.shootingDate}
-                </p>
-              )}
-              {point.comment && (
-                <p style={{ margin: "4px 0" }}>{point.comment}</p>
-              )}
-              {point.imageUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={point.imageUrl}
-                  alt="投稿画像"
-                  style={{ width: "100%", marginTop: 8 }}
-                />
-              )}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-      <LocateButton />
-    </MapContainer>
+    <>
+      <MapContainer
+        center={initialCenter}
+        zoom={DEFAULT_ZOOM}
+        style={{ height: "100%", width: "100%" }}
+        className="flex flex-col justify-center items-center"
+      >
+        <Header />
+        <TileLayer
+          attribution={process.env.NEXT_PUBLIC_MAP_ATTRIBUTION}
+          url={process.env.NEXT_PUBLIC_MAP_URL ?? ""}
+          className="map-minimal"
+        />
+        {mergedPoints.map((point, index) => (
+          <Marker
+            key={`${point.id}-${index}`}
+            position={[point.lat, point.lng]}
+            eventHandlers={{
+              click: () => handleClick(point),
+            }}
+          />
+        ))}
+        <LocateButton />
+      </MapContainer>
+      <LocationSheet selectedPoint={selectedPoint as MergedPoint} />
+    </>
   );
 }
