@@ -131,3 +131,50 @@ export async function reverseGeocode(
   }
   return null;
 }
+
+/*
+マップ表示用UIに必要なデータを取得
+*/
+
+// Google Drive URLを表示可能な形式に変換
+export function convertDriveUrl(
+  driveUrl: string | undefined,
+): string | undefined {
+  if (!driveUrl) return undefined;
+  const fileId = extractFileId(driveUrl);
+  if (fileId) {
+    return `https://lh3.googleusercontent.com/d/${fileId}`;
+  }
+  return driveUrl;
+}
+
+// マップ表示用のデータを取得
+export async function getMapPoints() {
+  const rows = await getSheetData("formatted_data", "A:Z");
+
+  if (rows.length === 0) return [];
+
+  const headers = rows[0];
+  const dataRows = rows.slice(1);
+
+  // ヘッダーからインデックスを取得
+  const idxId = headers.indexOf("元ID");
+  const idxName = headers.indexOf("ユーザー名");
+  const idxLat = headers.indexOf("緯度");
+  const idxLng = headers.indexOf("経度");
+  const idxImage = headers.indexOf("画像URL");
+  const idxComment = headers.indexOf("この場所について");
+  const idxDate = headers.indexOf("撮影日時");
+
+  return dataRows
+    .filter((row) => row[idxLat] && row[idxLng])
+    .map((row) => ({
+      id: row[idxId] || "",
+      lat: parseFloat(row[idxLat]),
+      lng: parseFloat(row[idxLng]),
+      title: row[idxName] || "投稿",
+      imageUrl: convertDriveUrl(row[idxImage]),
+      comment: row[idxComment] || "",
+      shootingDate: row[idxDate] || "",
+    }));
+}
