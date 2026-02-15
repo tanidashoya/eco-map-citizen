@@ -10,7 +10,7 @@ import type { ActionResponse } from "../../types/data-format-generate/types";
  * Google Geocoding APIを使用して逆ジオコーディング
  */
 export async function fetchAddress(): Promise<ActionResponse> {
-  const data = await getSheetData("formatted_data", "A:K");
+  const data = await getSheetData("formatted_data", "A:L");
   if (data.length <= 1) {
     return {
       success: false,
@@ -23,19 +23,19 @@ export async function fetchAddress(): Promise<ActionResponse> {
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    const latStr = row[6];
-    const lngStr = row[7];
-    const existingAddress = row[9]; // J列: 住所
+    const latStr = row[7]; // H列: 緯度
+    const lngStr = row[8]; // I列: 経度
+    const existingAddress = row[10]; // K列: 撮影住所
     if (latStr === "-" || lngStr === "-") continue;
-    const latitude = parseFloat(latStr); // G列: 緯度
-    const longitude = parseFloat(lngStr); // H列: 経度
+    const latitude = parseFloat(latStr);
+    const longitude = parseFloat(lngStr);
     // 緯度経度がない or 既に住所がある場合はスキップ
     if (isNaN(latitude) || isNaN(longitude) || existingAddress) continue;
 
     try {
       const address = await reverseGeocode(latitude, longitude);
       if (address) {
-        await updateSheetCell("formatted_data", `J${i + 1}`, address); //ここでi+1としているのはdataの配列の行番号と一致させるため
+        await updateSheetCell("formatted_data", `K${i + 1}`, address); //ここでi+1としているのはdataの配列の行番号と一致させるため
         updatedCount++;
       }
       // API制限対策（100ms待機）

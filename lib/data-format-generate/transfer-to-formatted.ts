@@ -1,5 +1,6 @@
 import { getSheetData, appendSheetData } from "@/lib/google-api/google-api";
 import type { ActionResponse } from "../../types/data-format-generate/types";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * ① user_input → formatted_data への転記
@@ -39,17 +40,18 @@ export async function transferToFormatted(): Promise<ActionResponse> {
     //繰り返し分の入れ子構造でnewRowsに追加
     for (const url of urls) {
       newRows.push([
-        timestamp, // A: 元ID
-        userName || "", // B: ユーザーの名前
-        userAddress || "", // C: ユーザーの住所
-        birthDate || "", // D: 生年月日
-        url, // E: 画像URL（1URL）
-        comment || "", // F: この場所について一言
-        "", // G: 緯度（後で取得）
-        "", // H: 経度
-        "", // I: 撮影日時
-        "", // J: 撮影住所
-        "FALSE", // K: 処理済みフラグ
+        uuidv4(), // A: ユニークID（画像URLごとに一意）
+        timestamp, // B: タイムスタンプ
+        userName || "", // C: ユーザー名
+        userAddress || "", // D: ユーザー住所
+        birthDate || "", // E: 生年月日
+        url, // F: 画像URL（1URL）
+        comment || "", // G: この場所について一言
+        "", // H: 緯度（後で取得）
+        "", // I: 経度
+        "", // J: 撮影日時
+        "", // K: 撮影住所
+        "FALSE", // L: 処理済みフラグ
       ]);
     }
   }

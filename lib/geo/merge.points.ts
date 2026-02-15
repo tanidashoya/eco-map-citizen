@@ -20,6 +20,8 @@ export function mergePoints(points: Point[]): MergedPoint[] {
       // すでにあるデータの代表座標と距離が近い場合はマージ
       if (distance <= MERGE_DISTANCE_METERS) {
         group.items.push({
+          uniqueId: point.uniqueId,
+          stamp: point.stamp,
           name: point.name,
           imageUrl: point.imageUrl,
           comment: point.comment,
@@ -35,11 +37,12 @@ export function mergePoints(points: Point[]): MergedPoint[] {
     // 登録されているデータに近い座標がない場合には新しいデータを追加
     if (!merged) {
       result.push({
-        id: point.id,
         lat: point.lat,
         lng: point.lng,
         items: [
           {
+            uniqueId: point.uniqueId,
+            stamp: point.stamp,
             name: point.name,
             imageUrl: point.imageUrl,
             comment: point.comment,

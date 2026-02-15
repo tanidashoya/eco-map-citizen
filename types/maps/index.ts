@@ -1,5 +1,6 @@
 export interface Point {
-  id: string;
+  uniqueId: string;
+  stamp: string;
   lat: number;
   lng: number;
   name?: string;
@@ -19,6 +20,8 @@ export interface MapProps {
 }
 
 export interface ClusterItem {
+  uniqueId: string;
+  stamp: string;
   name?: string;
   imageUrl?: string;
   comment?: string;
@@ -27,7 +30,6 @@ export interface ClusterItem {
 }
 
 export interface MergedPoint {
-  id: string;
   lat: number;
   lng: number;
   items: ClusterItem[];

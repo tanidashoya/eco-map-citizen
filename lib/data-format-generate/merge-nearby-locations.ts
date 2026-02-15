@@ -16,7 +16,7 @@ const MERGE_DISTANCE_METERS = 20;
  * formatted_dataから近接する投稿をグループ化してmerge_location_dataに保存
  */
 export async function mergeNearbyLocations(): Promise<ActionResponse> {
-  const data = await getSheetData("formatted_data", "A:K");
+  const data = await getSheetData("formatted_data", "A:L");
   if (data.length <= 1) {
     return {
       success: true,
@@ -26,7 +26,7 @@ export async function mergeNearbyLocations(): Promise<ActionResponse> {
   }
 
   // 緯度・経度があるデータのみ抽出
-  const validRows = data.slice(1).filter((row) => row[6] && row[7]);
+  const validRows = data.slice(1).filter((row) => row[7] && row[8]);
 
   if (validRows.length === 0) {
     return {
@@ -44,16 +44,16 @@ export async function mergeNearbyLocations(): Promise<ActionResponse> {
     if (used.has(i)) continue;
 
     const baseRow = validRows[i];
-    const baseLat = parseFloat(baseRow[6]);
-    const baseLng = parseFloat(baseRow[7]);
+    const baseLat = parseFloat(baseRow[7]);
+    const baseLng = parseFloat(baseRow[8]);
 
     const group: MergedLocationRow = {
       groupId: `group-${groups.length + 1}`,
       latitude: baseLat,
       longitude: baseLng,
-      imageUrls: [baseRow[4]], // E列: 画像URL
-      comments: baseRow[5] ? [baseRow[5]] : [], // F列: コメント
-      address: baseRow[9] || "", // J列: 住所
+      imageUrls: [baseRow[5]], // F列: 画像URL
+      comments: baseRow[6] ? [baseRow[6]] : [], // G列: この場所について
+      address: baseRow[10] || "", // K列: 撮影住所
       count: 1,
     };
 
@@ -64,8 +64,8 @@ export async function mergeNearbyLocations(): Promise<ActionResponse> {
       if (used.has(j)) continue;
 
       const targetRow = validRows[j];
-      const targetLat = parseFloat(targetRow[6]);
-      const targetLng = parseFloat(targetRow[7]);
+      const targetLat = parseFloat(targetRow[7]);
+      const targetLng = parseFloat(targetRow[8]);
 
       const distance = calculateDistance(
         baseLat,
@@ -75,8 +75,8 @@ export async function mergeNearbyLocations(): Promise<ActionResponse> {
       );
 
       if (distance <= MERGE_DISTANCE_METERS) {
-        group.imageUrls.push(targetRow[4]);
-        if (targetRow[5]) group.comments.push(targetRow[5]);
+        group.imageUrls.push(targetRow[5]);
+        if (targetRow[6]) group.comments.push(targetRow[6]);
         group.count++;
         used.add(j);
 

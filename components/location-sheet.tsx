@@ -9,14 +9,21 @@ import {
 } from "./ui/sheet";
 import { ClusterItem, MergedPoint } from "@/types/maps";
 import { useRouter, useSearchParams } from "next/navigation";
+import LocationItem from "./location-item";
 
 interface LocationSheetProps {
-  selectedPoint: MergedPoint;
+  selectedPoint: MergedPoint | null;
 }
 export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locationId = searchParams.get("location");
+
+  // selectedPointがnullの場合は何も表示しない
+  if (!selectedPoint) {
+    return null;
+  }
+
   return (
     <Sheet
       open={!!locationId}
@@ -26,38 +33,20 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
         }
       }}
     >
-      <SheetContent side="left" className="w-[80vw]">
-        {selectedPoint && (
-          <div className="overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>{selectedPoint.items.length}件の投稿</SheetTitle>
-              <SheetDescription className="sr-only">
-                選択した地点の投稿一覧
-              </SheetDescription>
-            </SheetHeader>
-
+      <SheetContent side="bottom" className="h-[70vh]">
+        <div className="overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{selectedPoint.items.length}件の投稿</SheetTitle>
+            <SheetDescription className="sr-only">
+              選択した地点の投稿一覧
+            </SheetDescription>
+          </SheetHeader>
+          <div className="grid grid-cols-3 gap-4">
             {selectedPoint.items.map((item: ClusterItem, idx: number) => (
-              <div
-                key={idx}
-                className="mb-4 border-b pb-2 flex flex-col items-center justify-between"
-              >
-                {item.shootingDate && (
-                  <p className="text-xs text-gray-400">{item.shootingDate}</p>
-                )}
-                {item.imageUrl && (
-                  <Image
-                    src={item.imageUrl}
-                    alt="投稿画像"
-                    width={300}
-                    height={200}
-                    className="w-[60%] rounded mt-2"
-                  />
-                )}
-                {item.comment && <p className="text-sm mt-2">{item.comment}</p>}
-              </div>
+              <LocationItem item={item} key={`${item.shootingDate}-${idx}`} />
             ))}
           </div>
-        )}
+        </div>
       </SheetContent>
     </Sheet>
   );

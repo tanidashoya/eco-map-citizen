@@ -13,7 +13,7 @@ import type { ActionResponse } from "@/types/data-format-generate/types";
  */
 export async function extractImageLocation(): Promise<ActionResponse> {
   // 1. formatted_dataから全行を取得
-  const data = await getSheetData("formatted_data", "A:K");
+  const data = await getSheetData("formatted_data", "A:L");
   if (data.length <= 1) {
     return {
       success: false,
@@ -26,9 +26,9 @@ export async function extractImageLocation(): Promise<ActionResponse> {
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    const imageUrl = row[4]; // E列: 画像URL
-    const latitude = row[6]; // G列: 緯度
-    const processed = row[10]; // K列: 処理済みフラグ
+    const imageUrl = row[5]; // F列: 画像URL
+    const latitude = row[7]; // H列: 緯度
+    const processed = row[11]; // L列: 処理済みフラグ
 
     // 既に処理済み or 緯度がある場合はスキップ
     if (processed === "TRUE" || latitude) continue;
@@ -61,8 +61,8 @@ export async function extractImageLocation(): Promise<ActionResponse> {
         ? new Date(tags.DateTimeOriginal * 1000).toISOString()
         : "-";
 
-      // G〜K列を一括更新 (G:緯度, H:経度, I:日時, J:住所(空), K:処理済み)
-      await updateSheetRange("formatted_data", `G${rowNum}:K${rowNum}`, [
+      // H〜L列を一括更新 (H:緯度, I:経度, J:撮影日時, K:撮影住所(空), L:処理済み)
+      await updateSheetRange("formatted_data", `H${rowNum}:L${rowNum}`, [
         [lat, lng, dateTime, "", "TRUE"],
       ]);
 
