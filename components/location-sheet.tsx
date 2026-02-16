@@ -12,7 +12,7 @@ import LocationItem from "./location-item";
 export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const locationId = searchParams.get("location");
+  const clusterId = searchParams.get("cluster");
 
   // selectedPointがnullの場合は何も表示しない
   if (!selectedPoint) {
@@ -21,7 +21,7 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
 
   return (
     <Sheet
-      open={!!locationId}
+      open={!!clusterId}
       onOpenChange={(open) => {
         //モーダルを閉じた時(openがfalseの時)
         if (!open) {
@@ -29,7 +29,7 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
         }
       }}
     >
-      <SheetContent side="bottom" className="h-[70vh]">
+      <SheetContent side="bottom" className="h-[60vh]">
         <div className="overflow-y-auto">
           <SheetHeader>
             <SheetTitle>{selectedPoint.items.length}件の投稿</SheetTitle>
@@ -37,10 +37,12 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
               選択した地点の投稿一覧
             </SheetDescription>
           </SheetHeader>
-          <div className="grid grid-cols-3 gap-4">
-            {selectedPoint.items.map((item: ClusterItem, index: number) => (
-              <LocationItem item={item} key={`${item.uniqueId}-${index}`} />
-            ))}
+          <div className="flex items-center justify-center">
+            <div className="grid grid-cols-3 items-center gap-3 justify-center px-2">
+              {selectedPoint.items.map((item: ClusterItem, index: number) => (
+                <LocationItem item={item} key={`${item.uniqueId}-${index}`} />
+              ))}
+            </div>
           </div>
         </div>
       </SheetContent>

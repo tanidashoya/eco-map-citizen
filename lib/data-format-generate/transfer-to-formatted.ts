@@ -18,9 +18,15 @@ export async function transferToFormatted(): Promise<ActionResponse> {
     };
   }
 
-  // 2. formatted_dataの既存IDを取得（重複防止）
-  const existingData = await getSheetData("formatted_data", "A:A");
-  const existingIds = new Set(existingData.slice(1).map((row) => row[0])); //1行目はヘッダーなのでスキップ
+  // 2. formatted_dataの既存データを取得（重複防止）
+  // B列:timestamp, C列:userName, F列:imageUrls を使った複合キーで重複チェック
+  const existingData = await getSheetData("formatted_data", "B:F");
+  const existingKeys = new Set(
+    existingData.slice(1).map((row) => {
+      const [timestamp, userName, , , imageUrls] = row; // B, C, D, E, F列
+      return `${timestamp}|${userName}|${imageUrls}`; // 複合キー
+    })
+  );
 
   // 3. 展開してformatted_dataに追記
   const newRows: string[][] = [];
@@ -29,11 +35,12 @@ export async function transferToFormatted(): Promise<ActionResponse> {
     const [timestamp, userName, userAddress, birthDate, imageUrls, comment] =
       row;
 
-    // 既に転記済みならスキップ
-    //集合(Set)のhasメソッドで、timestampが既に存在するかどうかを確認（存在していたらスキップ）
-    if (existingIds.has(timestamp)) continue;
     //画像URLがない場合はスキップ
     if (!imageUrls) continue;
+
+    // 複合キーで重複チェック（timestamp + userName + imageUrls）
+    const compositeKey = `${timestamp}|${userName}|${imageUrls}`;
+    if (existingKeys.has(compositeKey)) continue;
 
     newRows.push([
       uuidv4(), // A: ユニークID（画像URLごとに一意）

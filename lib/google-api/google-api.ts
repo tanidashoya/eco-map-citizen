@@ -157,7 +157,7 @@ export async function getMapPoints() {
   const dataRows = rows.slice(1);
 
   // ヘッダーからインデックスを取得
-  const idxUniqueId = headers.indexOf("ユニークIDID");
+  const idxUniqueId = headers.indexOf("ユニークID");
   const idxStamp = headers.indexOf("タイムスタンプ");
   const idxName = headers.indexOf("ユーザー名");
   const idxLat = headers.indexOf("緯度");
