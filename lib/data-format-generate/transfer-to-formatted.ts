@@ -34,26 +34,42 @@ export async function transferToFormatted(): Promise<ActionResponse> {
     if (existingIds.has(timestamp)) continue;
     //画像URLがない場合はスキップ
     if (!imageUrls) continue;
-    // 画像URLをカンマで分割して展開
-    const urls = imageUrls.split(",").map((url) => url.trim());
 
-    //繰り返し分の入れ子構造でnewRowsに追加
-    for (const url of urls) {
-      newRows.push([
-        uuidv4(), // A: ユニークID（画像URLごとに一意）
-        timestamp, // B: タイムスタンプ
-        userName || "", // C: ユーザー名
-        userAddress || "", // D: ユーザー住所
-        birthDate || "", // E: 生年月日
-        url, // F: 画像URL（1URL）
-        comment || "", // G: この場所について一言
-        "", // H: 緯度（後で取得）
-        "", // I: 経度
-        "", // J: 撮影日時
-        "", // K: 撮影住所
-        "FALSE", // L: 処理済みフラグ
-      ]);
-    }
+    newRows.push([
+      uuidv4(), // A: ユニークID（画像URLごとに一意）
+      timestamp, // B: タイムスタンプ
+      userName || "", // C: ユーザー名
+      userAddress || "", // D: ユーザー住所
+      birthDate || "", // E: 生年月日
+      imageUrls, // F: 画像URL（1URL） ※※※複数画像入力を許可していた時の名残
+      comment || "", // G: この場所について一言
+      "", // H: 緯度（後で取得）
+      "", // I: 経度
+      "", // J: 撮影日時
+      "", // K: 撮影住所
+      "FALSE", // L: 処理済みフラグ
+    ]);
+
+    //※※※ユーザーからの投稿が複数画像をOKにしていた時の場合
+    // 画像URLをカンマで分割して展開
+    //   const urls = imageUrls.split(",").map((url) => url.trim());
+    //   //繰り返し分の入れ子構造でnewRowsに追加
+    //   for (const url of urls) {
+    //     newRows.push([
+    //       uuidv4(), // A: ユニークID（画像URLごとに一意）
+    //       timestamp, // B: タイムスタンプ
+    //       userName || "", // C: ユーザー名
+    //       userAddress || "", // D: ユーザー住所
+    //       birthDate || "", // E: 生年月日
+    //       url, // F: 画像URL（1URL）
+    //       comment || "", // G: この場所について一言
+    //       "", // H: 緯度（後で取得）
+    //       "", // I: 経度
+    //       "", // J: 撮影日時
+    //       "", // K: 撮影住所
+    //       "FALSE", // L: 処理済みフラグ
+    //     ]);
+    //   }
   }
 
   if (newRows.length === 0) {

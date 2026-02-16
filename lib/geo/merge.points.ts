@@ -2,7 +2,7 @@ import { calculateDistance } from "./calculate-distance";
 import { Point, MergedPoint } from "@/types/maps";
 
 export function mergePoints(points: Point[]): MergedPoint[] {
-  const MERGE_DISTANCE_METERS = 20;
+  const MERGE_DISTANCE_METERS = 5;
   const result: MergedPoint[] = [];
 
   //pointsはpointWithImagesの配列(1行1データ)

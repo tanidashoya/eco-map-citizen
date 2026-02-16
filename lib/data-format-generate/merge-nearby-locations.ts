@@ -9,7 +9,7 @@ import type {
 } from "../../types/data-format-generate/types";
 import { calculateDistance } from "../geo/calculate-distance";
 
-const MERGE_DISTANCE_METERS = 20;
+const MERGE_DISTANCE_METERS = 5;
 
 /**
  * ⑤ 20m圏内の地点を統合

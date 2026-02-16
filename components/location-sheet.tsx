@@ -1,5 +1,3 @@
-import React from "react";
-import Image from "next/image";
 import {
   Sheet,
   SheetContent,
@@ -7,13 +5,10 @@ import {
   SheetTitle,
   SheetDescription,
 } from "./ui/sheet";
-import { ClusterItem, MergedPoint } from "@/types/maps";
+import { ClusterItem, LocationSheetProps } from "@/types/maps";
 import { useRouter, useSearchParams } from "next/navigation";
 import LocationItem from "./location-item";
 
-interface LocationSheetProps {
-  selectedPoint: MergedPoint | null;
-}
 export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,6 +23,7 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
     <Sheet
       open={!!locationId}
       onOpenChange={(open) => {
+        //モーダルを閉じた時(openがfalseの時)
         if (!open) {
           router.push("/");
         }
@@ -42,8 +38,8 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
             </SheetDescription>
           </SheetHeader>
           <div className="grid grid-cols-3 gap-4">
-            {selectedPoint.items.map((item: ClusterItem, idx: number) => (
-              <LocationItem item={item} key={`${item.shootingDate}-${idx}`} />
+            {selectedPoint.items.map((item: ClusterItem, index: number) => (
+              <LocationItem item={item} key={`${item.uniqueId}-${index}`} />
             ))}
           </div>
         </div>

@@ -34,3 +34,7 @@ export interface MergedPoint {
   lng: number;
   items: ClusterItem[];
 }
+
+export interface LocationSheetProps {
+  selectedPoint: MergedPoint | null;
+}

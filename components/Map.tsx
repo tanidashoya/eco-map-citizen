@@ -42,6 +42,7 @@ export default function Map({ mergedPoints, initialCenter }: MapProps) {
   const handleClick = (point: MergedPoint) => {
     console.log("clicked", point);
     setSelectedPoint(point);
+
     router.push(`/?location=${point.lat}-${point.lng}`);
   };
   return (
