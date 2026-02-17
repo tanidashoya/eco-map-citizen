@@ -8,6 +8,7 @@ import Header from "./header";
 import { useState } from "react";
 import LocationSheet from "./location-sheet";
 import { useRouter } from "next/navigation";
+import LocationItemSheet from "./location-sheet-content";
 
 // Next.js環境でのアイコン修正
 //Leafletの内部関数：_getIconUrlを削除⇒「勝手に探すな」（これがなければLeafletが自動的にアイコンを探しに行ってしまう）【Next.js環境ではエラーが発生するため】
@@ -35,7 +36,9 @@ export default function Map({ mergedPoints, initialCenter }: MapProps) {
   const handleClick = (point: MergedPoint) => {
     console.log("clicked", point);
     setSelectedPoint(point);
-    if (point.items.length > 1) {
+    if (point.items.length === 1) {
+      router.push(`/?point=${point.items[0].uniqueId}`);
+    } else {
       router.push(`/?cluster=${point.lat}-${point.lng}`);
     }
   };
@@ -65,7 +68,6 @@ export default function Map({ mergedPoints, initialCenter }: MapProps) {
         <LocateButton />
       </MapContainer>
       <LocationSheet selectedPoint={selectedPoint as MergedPoint} />
-      {/* <LocationDetail selectedItem={selectedPoint?.items[0] as ClusterItem} /> */}
     </>
   );
 }

@@ -44,7 +44,11 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
             <div className="flex items-center justify-center lg:mt-6">
               <div className="grid grid-cols-3 lg:grid-cols-8 items-center gap-3 md:gap-4 lg:gap-6 justify-center px-2 md:px-4 lg:px-4">
                 {selectedPoint.items.map((item: ClusterItem, index: number) => (
-                  <LocationItem key={`${item.uniqueId}-${index}`} item={item} />
+                  <LocationItem
+                    key={`${item.uniqueId}-${index}`}
+                    item={item}
+                    clusterId={clusterId}
+                  />
                 ))}
               </div>
             </div>

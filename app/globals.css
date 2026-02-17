@@ -136,12 +136,12 @@
 
 /*マップのタイル*/
 /* 1. グレースケール（彩度0%） */
-.grayscale-tiles {
+/* .grayscale-tiles {
   filter: grayscale(10%) brightness(0.95);
-}
+} */
 
 /* 2. ミニマル（彩度低め + コントラスト高め） */
-.map-minimal {
+/* .map-minimal {
   filter: saturate(0.8) brightness(1.05) contrast(1.05) sepia(5%)
     hue-rotate(2deg);
-}
+} */
