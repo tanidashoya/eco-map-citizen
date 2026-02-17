@@ -1,12 +1,12 @@
-// middleware.ts
+// proxy.ts (Next.js 16: middleware.ts から移行)
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  console.log("[middleware] path:", request.nextUrl.pathname);
+export function proxy(request: NextRequest) {
+  console.log("[proxy] path:", request.nextUrl.pathname);
 
   const authHeader = request.headers.get("authorization");
-  console.log("[middleware] authHeader:", authHeader ? "あり" : "なし");
+  console.log("[proxy] authHeader:", authHeader ? "あり" : "なし");
 
   if (authHeader) {
     try {
@@ -18,16 +18,16 @@ export function middleware(request: NextRequest) {
         username === process.env.ADMIN_USERNAME &&
         password === process.env.ADMIN_PASSWORD
       ) {
-        console.log("[middleware] 認証成功");
+        console.log("[proxy] 認証成功");
         return NextResponse.next();
       }
-      console.log("[middleware] 認証失敗: credentials mismatch");
+      console.log("[proxy] 認証失敗: credentials mismatch");
     } catch (e) {
-      console.error("[middleware] デコードエラー:", e);
+      console.error("[proxy] デコードエラー:", e);
     }
   }
 
-  console.log("[middleware] 401を返却");
+  console.log("[proxy] 401を返却");
   return new NextResponse("認証が必要です", {
     status: 401,
     headers: { "WWW-Authenticate": 'Basic realm="Admin"' },

@@ -3,16 +3,8 @@ import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import LocateButton from "./locate-button";
-import { ClusterItem, MapProps, MergedPoint } from "@/types/maps";
+import { MapProps, MergedPoint } from "@/types/maps";
 import Header from "./header";
-import LocationDialog from "./location-dialog";
-// import {
-//   Sheet,
-//   SheetContent,
-//   SheetDescription,
-//   SheetHeader,
-//   SheetTitle,
-// } from "@/components/ui/sheet";
 import { useState } from "react";
 import LocationSheet from "./location-sheet";
 import { useRouter } from "next/navigation";
@@ -43,9 +35,7 @@ export default function Map({ mergedPoints, initialCenter }: MapProps) {
   const handleClick = (point: MergedPoint) => {
     console.log("clicked", point);
     setSelectedPoint(point);
-    if (point.items.length === 1) {
-      router.push(`/?point=${point.items[0].uniqueId}`);
-    } else {
+    if (point.items.length > 1) {
       router.push(`/?cluster=${point.lat}-${point.lng}`);
     }
   };
@@ -75,7 +65,7 @@ export default function Map({ mergedPoints, initialCenter }: MapProps) {
         <LocateButton />
       </MapContainer>
       <LocationSheet selectedPoint={selectedPoint as MergedPoint} />
-      <LocationDialog selectedItem={selectedPoint?.items[0] as ClusterItem} />
+      {/* <LocationDetail selectedItem={selectedPoint?.items[0] as ClusterItem} /> */}
     </>
   );
 }
