@@ -10,17 +10,21 @@ import {
 } from "@/components/ui/sheet";
 import { Calendar, MapPin, MessageCircle, User } from "lucide-react";
 
-export default function LocationSheetContent({
+export default function LocationPoint({
   selectedItem,
 }: {
   selectedItem: ClusterItem;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const clusterId = searchParams.get("cluster");
-  const itemId = searchParams.get("item");
+  const itemId = searchParams.get("point");
+
+  if (!selectedItem) {
+    return null;
+  }
 
   const nameformatted = selectedItem.name ? selectedItem.name : "匿名ユーザー";
+
   const shootingDateformatted = selectedItem.shootingDate
     ? new Date(selectedItem.shootingDate).toLocaleDateString("ja-JP", {
         year: "numeric",
@@ -28,6 +32,7 @@ export default function LocationSheetContent({
         day: "numeric",
       })
     : "不明";
+
   const locationformatted = selectedItem.location
     ? selectedItem.location
         .split(" ")
@@ -35,13 +40,11 @@ export default function LocationSheetContent({
         .filter((part) => part !== "日本" && !/^\d{3}-?\d{4}$/.test(part))
         .join(" ")
     : "不明";
+
   const commentformatted = selectedItem.comment
     ? selectedItem.comment
     : "コメントがありません";
 
-  if (!selectedItem) {
-    return null;
-  }
   return (
     <>
       <Sheet

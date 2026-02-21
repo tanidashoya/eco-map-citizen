@@ -1,10 +1,10 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Point } from "@/types/maps";
 import { Loader2 } from "lucide-react";
 import { mergePoints } from "@/lib/geo/merge.points";
-import { useMemo } from "react";
+import { useCurrentLocation } from "@/lib/map/use-current-location";
 
 const Map = dynamic(() => import("./Map"), { ssr: false });
 
@@ -13,55 +13,26 @@ export default function MapWrapper({
 }: {
   pointsWithImages: Point[];
 }) {
-  //マップの初期位置を管理
-  const [initialCenter, setInitialCenter] = useState<[number, number] | null>(
-    null,
-  );
+  // 現在地を継続監視で取得（一元管理）
+  const { coords: currentLocation, isLoading: isLocationLoading } =
+    useCurrentLocation(true);
 
+  //マップに表示するデータを座標点ごとにマージ
   const mergedPoints = useMemo(
     () => mergePoints(pointsWithImages),
     [pointsWithImages],
   );
 
-  //マップの初期位置を取得
-  useEffect(() => {
-    const startTime = Date.now(); // 開始時間を取得
-
-    const defaultCenter: [number, number] =
-      mergedPoints.length > 0
+  // マップの初期位置をレンダー時に導出（effect不要）
+  const initialCenter = useMemo((): [number, number] | null => {
+    if (currentLocation) return [currentLocation.lat, currentLocation.lng];
+    if (!isLocationLoading) {
+      return mergedPoints.length > 0
         ? [mergedPoints[0].lat, mergedPoints[0].lng]
-        : [34.78, 132.86]; // デフォルト座標
-
-    //最低でも1秒待つようにする
-    // マップの初期位置を設定する関数(初期位置の座標を渡す)
-    const finish = (center: [number, number]) => {
-      const elapsed = Date.now() - startTime; // 経過時間を計算
-      const remaining = Math.max(1000 - elapsed, 0); // 残り時間を計算
-
-      setTimeout(() => {
-        setInitialCenter(center);
-      }, remaining);
-    };
-
-    //ブラウザがGeolocation APIをサポートしていない場合はデフォルト座標を設定
-    //「位置情報機能が使えない環境なら」
-    if (!navigator.geolocation) {
-      finish(defaultCenter);
-      return;
+        : [34.78, 132.86];
     }
-
-    //ブラウザがGeolocation APIをサポートしている場合は位置情報を取得
-    //現在地を取得し、マップの初期位置を設定
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        finish([pos.coords.latitude, pos.coords.longitude]); // 現在地の座標を渡す
-      },
-      () => {
-        finish(defaultCenter); // デフォルト座標を渡す（エラーが渡されたらデフォルト座標を設定）
-      },
-      { timeout: 5000 }, // タイムアウト時間を設定（タイムアウトしたらエラーが渡される）
-    );
-  }, [mergedPoints]);
+    return null;
+  }, [currentLocation, isLocationLoading, mergedPoints]);
 
   if (!initialCenter) {
     return (
@@ -74,5 +45,11 @@ export default function MapWrapper({
     );
   }
 
-  return <Map mergedPoints={mergedPoints} initialCenter={initialCenter} />;
+  return (
+    <Map
+      mergedPoints={mergedPoints}
+      initialCenter={initialCenter}
+      currentLocation={currentLocation}
+    />
+  );
 }

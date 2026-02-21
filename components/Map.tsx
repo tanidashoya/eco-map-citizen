@@ -1,14 +1,17 @@
 "use client";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import { Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import LocateButton from "./locate-button";
-import { MapProps, MergedPoint } from "@/types/maps";
+import { ClusterItem, MapProps, MergedPoint } from "@/types/maps";
 import Header from "./header";
-import { useState } from "react";
 import LocationSheet from "./location-sheet";
 import { useRouter } from "next/navigation";
-import LocationItemSheet from "./location-sheet-content";
+import LocationPoint from "./location-point";
+import MapTypeButton from "./map-type-button";
+import createCustomIcon from "@/lib/map/create-custom-icon";
+import { useState, useMemo, useCallback } from "react";
+import Attribution from "./attribution";
+import MapLeaflet from "./map-leaflet";
 
 // Next.js環境でのアイコン修正
 //Leafletの内部関数：_getIconUrlを削除⇒「勝手に探すな」（これがなければLeafletが自動的にアイコンを探しに行ってしまう）【Next.js環境ではエラーが発生するため】
@@ -28,46 +31,69 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png", //影の画像
 });
 
-export default function Map({ mergedPoints, initialCenter }: MapProps) {
+export default function Map({
+  mergedPoints,
+  initialCenter,
+  currentLocation,
+  isLocationLoading,
+}: MapProps) {
   const [selectedPoint, setSelectedPoint] = useState<MergedPoint | null>(null);
-  const DEFAULT_ZOOM = 13;
+  const [mapTypePic, setMapTypePic] = useState(true);
+
   const router = useRouter();
 
-  const handleClick = (point: MergedPoint) => {
-    console.log("clicked", point);
-    setSelectedPoint(point);
-    if (point.items.length === 1) {
-      router.push(`/?point=${point.items[0].uniqueId}`);
-    } else {
-      router.push(`/?cluster=${point.lat}-${point.lng}`);
-    }
+  const handleMapType = () => {
+    setMapTypePic(!mapTypePic);
   };
+
+  // useCallbackでメモ化してuseMemoの依存配列が安定するようにする
+  const handleClick = useCallback(
+    (point: MergedPoint) => {
+      setSelectedPoint(point);
+      if (point.items.length === 1) {
+        router.push(`/?point=${point.items[0].uniqueId}`);
+      } else {
+        router.push(`/?cluster=${point.lat}-${point.lng}`);
+      }
+    },
+    [router],
+  );
+
+  // マーカーをメモ化してiconの再生成を防ぐ
+  // mergedPointsが変わった時だけ再生成される
+  const markers = useMemo(() => {
+    return mergedPoints.map((point, index) => {
+      const icon = createCustomIcon(
+        point.items[0].imageUrl ?? "",
+        point.items.length,
+      );
+      return (
+        <Marker
+          key={`${point.lat}-${point.lng}-${index}`}
+          icon={icon}
+          position={[point.lat, point.lng]}
+          eventHandlers={{
+            click: () => handleClick(point),
+          }}
+        />
+      );
+    });
+  }, [mergedPoints, handleClick]);
+
   return (
     <>
-      <MapContainer
-        center={initialCenter}
-        zoom={DEFAULT_ZOOM}
-        style={{ height: "100%", width: "100%" }}
-        className="flex flex-col justify-center items-center"
-      >
-        <Header />
-        <TileLayer
-          attribution={process.env.NEXT_PUBLIC_MAP_ATTRIBUTION}
-          url={process.env.NEXT_PUBLIC_MAP_URL ?? ""}
-          className="map-minimal"
-        />
-        {mergedPoints.map((point, index) => (
-          <Marker
-            key={`${point.lat}-${point.lng}-${index}`}
-            position={[point.lat, point.lng]}
-            eventHandlers={{
-              click: () => handleClick(point),
-            }}
-          />
-        ))}
-        <LocateButton />
-      </MapContainer>
+      <MapLeaflet
+        markers={markers}
+        initialCenter={initialCenter}
+        currentLocation={currentLocation}
+        isLocationLoading={isLocationLoading}
+        mapTypePic={mapTypePic}
+      />
+      <Header />
+      <MapTypeButton handleMapType={handleMapType} mapTypePic={mapTypePic} />
       <LocationSheet selectedPoint={selectedPoint as MergedPoint} />
+      <LocationPoint selectedItem={selectedPoint?.items[0] as ClusterItem} />
+      <Attribution mapTypePic={mapTypePic} />
     </>
   );
 }

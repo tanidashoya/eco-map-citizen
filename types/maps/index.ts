@@ -17,6 +17,8 @@ export interface MapWrapperProps {
 export interface MapProps {
   mergedPoints: MergedPoint[];
   initialCenter: [number, number];
+  currentLocation: { lat: number; lng: number } | null;
+  isLocationLoading: boolean;
 }
 
 export interface ClusterItem {
@@ -37,4 +39,10 @@ export interface MergedPoint {
 
 export interface LocationSheetProps {
   selectedPoint: MergedPoint | null;
+}
+
+export interface LocationState {
+  coords: { lat: number; lng: number } | null;
+  error: string | null;
+  isLoading: boolean;
 }

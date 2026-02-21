@@ -1,6 +1,8 @@
 import { getMapPoints } from "@/lib/google-api/google-api";
 import MapWrapper from "@/components/map-wrapper";
 
+// export const revalidate = 259200; // 3日（秒）
+
 export default async function Home() {
   // マップ表示用のデータを取得
   //画像がない場合にはundefinedになるので、undefinedを削除

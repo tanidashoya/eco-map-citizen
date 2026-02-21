@@ -27,12 +27,13 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
         onOpenChange={(open) => {
           //モーダルを閉じた時(openがfalseの時)
           if (!open) {
-            router.push("/");
+            router.replace("/"); //ここではback()ではなくreplace()を使用している(アプリの外に飛んでいく可能性を防ぐため)
           }
         }}
       >
-        <SheetContent side="bottom" className="h-[60vh]">
-          <div className="overflow-y-auto">
+        <SheetContent side="bottom" className="h-[60vh] flex flex-col">
+          {/* Flexアイテムが“中身の高さに引っ張られて縮まなくなる現象”を解除するもの */}
+          <div className="overflow-y-auto flex-1 min-h-0">
             <SheetHeader>
               <SheetTitle className="text-lg lg:text-xl">
                 {selectedPoint.items.length}件の投稿

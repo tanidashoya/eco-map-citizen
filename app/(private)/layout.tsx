@@ -1,4 +1,3 @@
-import Header from "@/components/header";
 import { Toaster } from "sonner";
 
 export default function PrivateLayout({
@@ -8,10 +7,9 @@ export default function PrivateLayout({
 }>) {
   return (
     <>
-      {/* <Header /> */}
-      <main className="w-screen h-screen ">
+      <main className="w-screen h-screen">
+        <Toaster position="top-center" />
         {children}
-        {/* <Toaster position="top-center" /> */}
       </main>
     </>
   );
