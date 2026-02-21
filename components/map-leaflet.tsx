@@ -28,7 +28,8 @@ export default function MapLeaflet({
       center={initialCenter}
       zoom={DEFAULT_ZOOM}
       style={{ height: "100%", width: "100%" }}
-      attributionControl={true}
+      attributionControl={false}
+      zoomControl={false}
     >
       {mapTypePic ? (
         <TileLayer

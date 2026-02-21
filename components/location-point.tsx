@@ -1,4 +1,4 @@
-import { ClusterItem } from "@/types/maps";
+import { MergedPoint } from "@/types/maps";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -9,19 +9,22 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Calendar, MapPin, MessageCircle, User } from "lucide-react";
+import GoogleMapButton from "./google-map-button";
 
 export default function LocationPoint({
-  selectedItem,
+  selectedPoint,
 }: {
-  selectedItem: ClusterItem;
+  selectedPoint: MergedPoint | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemId = searchParams.get("point");
 
-  if (!selectedItem) {
+  if (!selectedPoint) {
     return null;
   }
+
+  const selectedItem = selectedPoint.items[0];
 
   const nameformatted = selectedItem.name ? selectedItem.name : "匿名ユーザー";
 
@@ -58,7 +61,7 @@ export default function LocationPoint({
       >
         <SheetContent
           side="right"
-          className="!w-full !max-w-none !h-full lg:!w-[70%] "
+          className="!w-full !max-w-none !h-full lg:!w-[70%] flex flex-col gap-0"
         >
           <div className="overflow-y-auto flex-1 min-h-0">
             <SheetHeader>
@@ -122,6 +125,12 @@ export default function LocationPoint({
                 </div>
               </div>
             </div>
+          </div>
+          {/* Googleマップ経路ボタン */}
+          <div className="p-4 border-t shrink-0 bg-gray-200">
+            <GoogleMapButton
+              destination={{ lat: selectedPoint.lat, lng: selectedPoint.lng }}
+            />
           </div>
         </SheetContent>
       </Sheet>

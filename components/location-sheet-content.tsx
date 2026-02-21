@@ -9,15 +9,17 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Calendar, MapPin, MessageCircle, User } from "lucide-react";
+import GoogleMapButton from "./google-map-button";
 
 export default function LocationSheetContent({
   selectedItem,
+  destination,
 }: {
   selectedItem: ClusterItem;
+  destination: { lat: number; lng: number };
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const clusterId = searchParams.get("cluster");
   const itemId = searchParams.get("item");
 
   const nameformatted = selectedItem.name ? selectedItem.name : "匿名ユーザー";
@@ -55,7 +57,7 @@ export default function LocationSheetContent({
       >
         <SheetContent
           side="right"
-          className="!w-full !max-w-none !h-full lg:!w-[70%] "
+          className="!w-full !max-w-none !h-full lg:!w-[70%] flex flex-col"
         >
           <div className="overflow-y-auto flex-1 min-h-0">
             <SheetHeader>
@@ -119,6 +121,10 @@ export default function LocationSheetContent({
                 </div>
               </div>
             </div>
+          </div>
+          {/* Googleマップ経路ボタン */}
+          <div className="p-4 border-t shrink-0 bg-gray-200">
+            <GoogleMapButton destination={destination} />
           </div>
         </SheetContent>
       </Sheet>

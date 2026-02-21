@@ -2,7 +2,7 @@
 import { Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { ClusterItem, MapProps, MergedPoint } from "@/types/maps";
+import { MapProps, MergedPoint } from "@/types/maps";
 import Header from "./header";
 import LocationSheet from "./location-sheet";
 import { useRouter } from "next/navigation";
@@ -92,7 +92,7 @@ export default function Map({
       <Header />
       <MapTypeButton handleMapType={handleMapType} mapTypePic={mapTypePic} />
       <LocationSheet selectedPoint={selectedPoint as MergedPoint} />
-      <LocationPoint selectedItem={selectedPoint?.items[0] as ClusterItem} />
+      <LocationPoint selectedPoint={selectedPoint} />
       <Attribution mapTypePic={mapTypePic} />
     </>
   );

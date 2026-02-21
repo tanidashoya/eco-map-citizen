@@ -4,7 +4,7 @@ type Props = {
 
 export default function Attribution({ mapTypePic }: Props) {
   return (
-    <div className="absolute bottom-1 left-1 text-[10px] leading-[1.2] bg-white/80 py-0.5 px-1.5 rounded z-[1000]">
+    <div className="absolute bottom-1 left-1 text-[12px] lg:text-[14px] leading-[1.2] bg-white/80 py-0.5 px-1.5 rounded z-[1000]">
       {mapTypePic === true ? (
         <>
           ©{" "}

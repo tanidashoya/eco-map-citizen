@@ -50,6 +50,7 @@ export default function MapWrapper({
       mergedPoints={mergedPoints}
       initialCenter={initialCenter}
       currentLocation={currentLocation}
+      isLocationLoading={isLocationLoading}
     />
   );
 }

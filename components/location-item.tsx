@@ -7,9 +7,10 @@ import { User } from "lucide-react";
 interface LocationItemProps {
   item: ClusterItem;
   clusterId: string | null;
+  destination: { lat: number; lng: number };
 }
 
-export default function LocationItem({ item, clusterId }: LocationItemProps) {
+export default function LocationItem({ item, clusterId, destination }: LocationItemProps) {
   const name = item.name || "匿名ユーザー";
   const router = useRouter();
   const handleClick = (point: ClusterItem) => {
@@ -36,7 +37,7 @@ export default function LocationItem({ item, clusterId }: LocationItemProps) {
           <p className="text-white text-xs lg:text-base truncate">{name}</p>
         </div>
       </button>
-      <LocationSheetContent selectedItem={item} />
+      <LocationSheetContent selectedItem={item} destination={destination} />
     </>
   );
 }
