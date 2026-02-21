@@ -127,7 +127,7 @@ export default function LocationPoint({
             </div>
           </div>
           {/* Googleマップ経路ボタン */}
-          <div className="p-4 border-t shrink-0 bg-gray-200">
+          <div className="p-4 border-t shrink-0 bg-gray-200 w-full flex justify-center">
             <GoogleMapButton
               destination={{ lat: selectedPoint.lat, lng: selectedPoint.lng }}
             />

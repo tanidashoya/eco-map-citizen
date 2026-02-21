@@ -1,4 +1,4 @@
-import { Camera, MapPin, MapPinned, Plane, Satellite } from "lucide-react";
+import { MapPinned, Plane } from "lucide-react";
 import { Button } from "./ui/button";
 
 export default function MapTypeButton({

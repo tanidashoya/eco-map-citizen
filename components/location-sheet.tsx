@@ -38,7 +38,7 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
       >
         <SheetContent
           side="bottom"
-          className={`h-[60vh] lg:h-[70vh] flex flex-col transition-all duration-200 ${
+          className={`h-[60vh] lg:h-[70vh] flex flex-col items-center transition-all duration-100 gap-0 ${
             isDetailOpen ? "brightness-30 pointer-events-none" : ""
           }`}
         >
@@ -69,7 +69,7 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
             </div>
           </div>
           {/* Googleマップ経路ボタン（縮まないように固定） */}
-          <div className="shrink-0 p-4 border-t bg-gray-200">
+          <div className="shrink-0 p-4 border-t bg-gray-200 w-full flex justify-center">
             <GoogleMapButton
               destination={{ lat: selectedPoint.lat, lng: selectedPoint.lng }}
             />

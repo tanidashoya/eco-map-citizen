@@ -23,8 +23,8 @@ export default function GoogleMapButton({ destination }: GoogleMapButtonProps) {
   return (
     <a
       href={googleMapUrl}
-      // target="_blank"
-      // rel="noopener noreferrer"
+      target="_blank"
+      rel="noopener noreferrer"
       className="inline-block w-full lg:w-[40%]"
     >
       <Button

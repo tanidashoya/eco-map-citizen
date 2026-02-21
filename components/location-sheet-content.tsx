@@ -57,7 +57,7 @@ export default function LocationSheetContent({
       >
         <SheetContent
           side="right"
-          className="!w-full !max-w-none !h-full lg:!w-[70%] flex flex-col"
+          className="!w-full !max-w-none !h-full lg:!w-[70%] flex flex-col gap-0"
         >
           <div className="overflow-y-auto flex-1 min-h-0">
             <SheetHeader>
@@ -123,7 +123,7 @@ export default function LocationSheetContent({
             </div>
           </div>
           {/* Googleマップ経路ボタン */}
-          <div className="p-4 border-t shrink-0 bg-gray-200">
+          <div className="p-4 border-t shrink-0 bg-gray-200 w-full flex justify-center">
             <GoogleMapButton destination={destination} />
           </div>
         </SheetContent>
