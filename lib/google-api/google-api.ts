@@ -150,7 +150,16 @@ export async function uploadImageToDrive(
     },
     fields: "id",
   });
-  return `https://drive.google.com/open?id=${response.data.id!}`;
+
+  await oauthDrive.permissions.create({
+    fileId: response.data.id!,
+    requestBody: {
+      role: "reader",
+      type: "anyone",
+    },
+  });
+
+  return `https://drive.google.com/uc?export=view&id=${response.data.id!}`;
 }
 
 // ========== Geocoding ==========

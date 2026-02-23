@@ -6,7 +6,7 @@ import { MapProps, MergedPoint } from "@/types/maps";
 import Header from "./header";
 import LocationSheet from "./location-sheet";
 import { useRouter } from "next/navigation";
-import LocationPoint from "./location-point";
+import LocationDetailSheet from "./location-detail-sheet";
 import MapTypeButton from "./map-type-button";
 import createCustomIcon from "@/lib/map/create-custom-icon";
 import { useState, useMemo, useCallback } from "react";
@@ -92,7 +92,11 @@ export default function Map({
       <Header />
       <MapTypeButton handleMapType={handleMapType} mapTypePic={mapTypePic} />
       <LocationSheet selectedPoint={selectedPoint as MergedPoint} />
-      <LocationPoint selectedPoint={selectedPoint} />
+      <LocationDetailSheet
+        item={selectedPoint?.items[0] ?? null}
+        destination={selectedPoint ? { lat: selectedPoint.lat, lng: selectedPoint.lng } : null}
+        queryKey="point"
+      />
       <Attribution mapTypePic={mapTypePic} />
     </>
   );

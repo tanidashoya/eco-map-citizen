@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { ClusterItem } from "@/types/maps";
 import { useRouter } from "next/navigation";
-import LocationSheetContent from "./location-sheet-content";
+import LocationDetailSheet from "./location-detail-sheet";
 import { User } from "lucide-react";
 
 interface LocationItemProps {
@@ -37,7 +37,7 @@ export default function LocationItem({ item, clusterId, destination }: LocationI
           <p className="text-white text-xs lg:text-base truncate">{name}</p>
         </div>
       </button>
-      <LocationSheetContent selectedItem={item} destination={destination} />
+      <LocationDetailSheet item={item} destination={destination} queryKey="item" />
     </>
   );
 }
