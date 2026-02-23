@@ -25,13 +25,14 @@ export async function transferToFormatted(): Promise<ActionResponse> {
     existingData.slice(1).map((row) => {
       const [timestamp, userName, , , imageUrls] = row; // B, C, D, E, F列
       return `${timestamp}|${userName}|${imageUrls}`; // 複合キー
-    })
+    }),
   );
 
   // 3. 展開してformatted_dataに追記
   const newRows: string[][] = [];
 
   for (const row of userInputAllData.slice(1)) {
+    // user_inputの列順: A:timestamp, B:name, C:address, D:birthdate, E:imageUrl, F:comment
     const [timestamp, userName, userAddress, birthDate, imageUrls, comment] =
       row;
 

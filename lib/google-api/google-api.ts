@@ -1,8 +1,9 @@
 import { google } from "googleapis";
 import { Readable } from "stream";
 
-//credentialsを使用してGoogle APIに接続:登録済みのサービスアカウントのメールアドレスと秘密鍵を使用して認証
-//scopes:何を操作できるかの権限指定（googleのドキュメントに記載）
+// ========== 認証設定 ==========
+
+// サービスアカウント認証（スプレッドシート用）
 const auth = new google.auth.GoogleAuth({
   credentials: {
     client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -14,8 +15,18 @@ const auth = new google.auth.GoogleAuth({
   ],
 });
 
-const sheets = google.sheets({ version: "v4", auth }); //Sheets API用のクライアントを作っている
-const drive = google.drive({ version: "v3", auth }); //Drive API用のクライアントを作っている
+const sheets = google.sheets({ version: "v4", auth }); //Sheets API用のクライアント
+
+// OAuth認証（Drive用 - 個人アカウントとして操作）
+// サービスアカウントはストレージ容量が0のため、OAuthリフレッシュトークンを使用
+const oauthClient = new google.auth.OAuth2(
+  process.env.GOOGLE_OAUTH_CLIENT_ID,
+  process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+);
+oauthClient.setCredentials({
+  refresh_token: process.env.GOOGLE_OAUTH_REFRESH_TOKEN,
+});
+const oauthDrive = google.drive({ version: "v3", auth: oauthClient });
 
 const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID!;
 
@@ -23,8 +34,6 @@ const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID!;
 
 //スプレッドシートのデータを取得
 //values:スプレッドシートのデータを取得して返す(string[][]型)⇒ [[A1,B1,C1],[A2,B2,C2]]
-//goole-sheets-apiはセルの型をそのまま返す。
-//ここでの型定義・型アサーションは実行時の検証は行わず、開発時に「ここでは string[][] として扱う」と明示しているだけ
 export async function getSheetData(
   sheetName: string,
   range: string,
@@ -36,7 +45,7 @@ export async function getSheetData(
   return (response.data.values as string[][]) || [];
 }
 
-//指定したシート（sheetName）にデータ（values）を追加(append:指定した範囲の“最後”にデータを追加する)
+//指定したシート（sheetName）にデータ（values）を追加
 export async function appendSheetData(
   sheetName: string,
   values: (string | number | boolean)[][],
@@ -44,8 +53,8 @@ export async function appendSheetData(
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:Z`,
-    valueInputOption: "USER_ENTERED", //USER_ENTERED:ユーザーが入力した値をそのまま追加
-    requestBody: { values }, //values:追加するデータ（string[][]型）
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values },
   });
 }
 
@@ -59,7 +68,7 @@ export async function updateSheetCell(
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!${cell}`,
     valueInputOption: "USER_ENTERED",
-    requestBody: { values: [[value]] }, //rangeで指定したセルにvalueを更新
+    requestBody: { values: [[value]] },
   });
 }
 
@@ -73,7 +82,7 @@ export async function updateSheetRange(
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!${range}`,
     valueInputOption: "USER_ENTERED",
-    requestBody: { values }, //rangeで指定した範囲にvaluesを更新
+    requestBody: { values },
   });
 }
 
@@ -90,9 +99,6 @@ export async function clearSheet(
 // ========== ドライブ操作 ==========
 
 //画像URLからファイルIDを抽出
-//DriveのファイルID形式が2種類あるので、どちらの形式にも対応
-//パターン１:https://drive.google.com/open?id=1ABCxyz
-
 export function extractFileId(url: string): string | null {
   // ?id=xxx 形式
   let match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
@@ -103,15 +109,12 @@ export function extractFileId(url: string): string | null {
   return null;
 }
 
+// OAuth認証でDriveから画像を取得
 export async function getImageBuffer(fileId: string): Promise<Buffer> {
-  //DriveAPIで画像のバイナリデータを取得(Buffer型で返す)
-  //responseType: "arraybuffer" を指定すると、バイナリデータを ArrayBuffer として取得できる(デフォルトではJSON形式で返す)
-  const response = await drive.files.get(
+  const response = await oauthDrive.files.get(
     { fileId, alt: "media" },
     { responseType: "arraybuffer" },
   );
-  //Buffer型に変換して返す（Node.js のバイナリデータ型）ArrayBuffer型をBuffer型に変換
-  //ArrayBuffer はブラウザ由来のバイナリ型で、Node.js では扱いづらい
   return Buffer.from(response.data as ArrayBuffer);
 }
 
@@ -127,17 +130,7 @@ export function convertDriveUrl(
   return undefined;
 }
 
-// OAuth認証でDriveにアップロード（あなた本人のアカウントとして操作）
-// サービスアカウントはストレージ容量が0のため、OAuthリフレッシュトークンを使用
-const oauthClient = new google.auth.OAuth2(
-  process.env.GOOGLE_OAUTH_CLIENT_ID,
-  process.env.GOOGLE_OAUTH_CLIENT_SECRET,
-);
-oauthClient.setCredentials({
-  refresh_token: process.env.GOOGLE_OAUTH_REFRESH_TOKEN, //リフレッシュトークンを使用(無期限の合鍵)
-});
-const oauthDrive = google.drive({ version: "v3", auth: oauthClient }); //自身のアカウントで認証されたDrive APIのクライアントを作成
-
+// OAuth認証でDriveにアップロード
 export async function uploadImageToDrive(
   image: Buffer,
   folderId: string,
@@ -178,10 +171,8 @@ export async function reverseGeocode(
   return null;
 }
 
-/*
-マップ表示用UIに必要なデータを取得
-*/
-// マップ表示用のデータを取得
+// ========== マップ表示用 ==========
+
 export async function getMapPoints() {
   const rows = await getSheetData("formatted_data", "A:Z");
 

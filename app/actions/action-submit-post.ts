@@ -38,13 +38,14 @@ export async function submitPost(
     const imageUrl = await uploadImageToDrive(buffer, folderId, mimeType); //画像をGoogle Driveにアップロード
     console.log("imageUrl", imageUrl);
 
+    //スプレッドシートに追記するデータ(リストの順番通りに差し込まれる)
     const values = [
       timestamp,
       name.trim(),
       address,
       birthdate,
-      comment.trim(),
       imageUrl,
+      comment.trim(),
     ];
     await appendSheetData("user_input", [values]); //スプレッドシートにデータを追記
 
