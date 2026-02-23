@@ -1,10 +1,12 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { useAtom } from "jotai";
 import { Point } from "@/types/maps";
 import { Loader2 } from "lucide-react";
 import { mergePoints } from "@/lib/geo/merge.points";
 import { useCurrentLocation } from "@/lib/map/use-current-location";
+import { cachedCenterAtom } from "@/store/map-store";
 
 const Map = dynamic(() => import("./Map"), { ssr: false });
 
@@ -13,6 +15,9 @@ export default function MapWrapper({
 }: {
   pointsWithImages: Point[];
 }) {
+  // Jotai atomWithStorageから初期位置キャッシュを取得（ローカルストレージに永続化）
+  const [cachedCenter, setCachedCenter] = useAtom(cachedCenterAtom);
+
   // 現在地を継続監視で取得（一元管理）
   const { coords: currentLocation, isLoading: isLocationLoading } =
     useCurrentLocation(true);
@@ -23,8 +28,8 @@ export default function MapWrapper({
     [pointsWithImages],
   );
 
-  // マップの初期位置をレンダー時に導出（effect不要）
-  const initialCenter = useMemo((): [number, number] | null => {
+  // マップの初期位置を導出
+  const derivedCenter = useMemo((): [number, number] | null => {
     if (currentLocation) return [currentLocation.lat, currentLocation.lng];
     if (!isLocationLoading) {
       return mergedPoints.length > 0
@@ -33,6 +38,16 @@ export default function MapWrapper({
     }
     return null;
   }, [currentLocation, isLocationLoading, mergedPoints]);
+
+  // 一度確定した値をストアにキャッシュ（ローカルストレージに保存され、リロード時もローディングを出さない）
+  useEffect(() => {
+    if (derivedCenter && !cachedCenter) {
+      setCachedCenter(derivedCenter);
+    }
+  }, [derivedCenter, cachedCenter, setCachedCenter]);
+
+  //cachedCenterがあればそれを使用し、なければderivedCenterを使用
+  const initialCenter = cachedCenter ?? derivedCenter;
 
   if (!initialCenter) {
     return (

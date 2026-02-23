@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { Readable } from "stream";
 
 //credentialsを使用してGoogle APIに接続:登録済みのサービスアカウントのメールアドレスと秘密鍵を使用して認証
 //scopes:何を操作できるかの権限指定（googleのドキュメントに記載）
@@ -9,7 +10,7 @@ const auth = new google.auth.GoogleAuth({
   },
   scopes: [
     "https://www.googleapis.com/auth/spreadsheets", //スプレッドシートの読み書き
-    "https://www.googleapis.com/auth/drive.readonly", //ドライブの読み込み
+    "https://www.googleapis.com/auth/drive", //ドライブの読み書き
   ],
 });
 
@@ -124,6 +125,39 @@ export function convertDriveUrl(
     return `https://lh3.googleusercontent.com/d/${fileId}`;
   }
   return undefined;
+}
+
+// OAuth認証でDriveにアップロード（あなた本人のアカウントとして操作）
+// サービスアカウントはストレージ容量が0のため、OAuthリフレッシュトークンを使用
+const oauthClient = new google.auth.OAuth2(
+  process.env.GOOGLE_OAUTH_CLIENT_ID,
+  process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+);
+oauthClient.setCredentials({
+  refresh_token: process.env.GOOGLE_OAUTH_REFRESH_TOKEN, //リフレッシュトークンを使用(無期限の合鍵)
+});
+const oauthDrive = google.drive({ version: "v3", auth: oauthClient }); //自身のアカウントで認証されたDrive APIのクライアントを作成
+
+export async function uploadImageToDrive(
+  image: Buffer,
+  folderId: string,
+  mimeType: string,
+): Promise<string> {
+  const ext = mimeType.split("/")[1] ?? "jpg";
+  const name = `image_${Date.now()}.${ext}`;
+  const response = await oauthDrive.files.create({
+    requestBody: {
+      name: name,
+      mimeType: mimeType,
+      parents: [folderId],
+    },
+    media: {
+      mimeType: mimeType,
+      body: Readable.from(image),
+    },
+    fields: "id",
+  });
+  return `https://drive.google.com/open?id=${response.data.id!}`;
 }
 
 // ========== Geocoding ==========

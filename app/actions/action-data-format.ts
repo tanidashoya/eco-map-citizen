@@ -18,8 +18,12 @@ export async function ActionDataFormmatLocate() {
     return address;
   }
   const mergeLocations = await mergeNearbyLocations();
-  console.log(details);
-  console.log(imageLocation);
-  console.log(address);
-  console.log(mergeLocations);
+  if (!mergeLocations.success) {
+    return mergeLocations;
+  }
+  return {
+    success: true,
+    message: "データのフォーマットが完了しました",
+    processedCount: mergeLocations.processedCount,
+  };
 }

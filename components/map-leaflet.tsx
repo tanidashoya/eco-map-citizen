@@ -1,3 +1,4 @@
+"use client";
 import { MapContainer, TileLayer } from "react-leaflet";
 import CurrentLocationMarker from "./current-location-marker";
 import LocateButton from "./locate-button";
