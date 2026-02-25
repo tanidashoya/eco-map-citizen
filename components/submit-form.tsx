@@ -53,34 +53,43 @@ export function SubmitForm() {
     SubmitPostResult | null,
     FormData
   >(async (_prevState, formData) => {
-    // クライアント側バリデーション
-    if (!image) {
-      toast.error("写真を1枚追加してください");
-      return { success: false, message: "写真を1枚追加してください" };
-    }
-    if (!agreed) {
-      toast.error("利用規約への同意が必要です");
-      return { success: false, message: "利用規約への同意が必要です" };
-    }
+    try {
+      // クライアント側バリデーション
+      if (!image) {
+        toast.error("写真を1枚追加してください");
+        return { success: false, message: "写真を1枚追加してください" };
+      }
+      if (!agreed) {
+        toast.error("利用規約への同意が必要です");
+        return { success: false, message: "利用規約への同意が必要です" };
+      }
 
-    // 画像とタイムスタンプを追加
-    formData.append("image", image.file);
-    formData.append("timestamp", new Date().toISOString());
+      // 画像とタイムスタンプを追加
+      formData.append("image", image.file);
+      formData.append("timestamp", new Date().toISOString());
 
-    // Server Actionを呼び出し
-    const result = await submitPost(formData);
+      // Server Actionを呼び出し
+      const result = await submitPost(formData);
 
-    if (result.success) {
-      toast.success(result.message);
-      // フォームリセット
-      formRef.current?.reset();
-      setImage(null);
-      setAgreed(false);
-      setAddress("");
-    } else {
-      toast.error(result.message);
+      if (result.success) {
+        toast.success(result.message);
+        // フォームリセット
+        formRef.current?.reset();
+        setImage(null);
+        setAgreed(false);
+        setAddress("");
+      } else {
+        toast.error(result.message);
+      }
+      return result;
+    } catch (error) {
+      // エラーの詳細をコンソールに出力（デバッグ用）
+      console.error("フォーム送信エラー:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "不明なエラー";
+      toast.error(`送信エラー: ${errorMessage}`);
+      return { success: false, message: errorMessage };
     }
-    return result;
   }, null); //useActionStateの初期値（第一引数：実行する関数（この実行する関数に_prevStateとformDataが渡される）、第二引数：初期値）
 
   // ---- レンダリング ----

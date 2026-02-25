@@ -1,4 +1,5 @@
 "use server";
+import { revalidatePath } from "next/cache";
 import { transferToFormatted } from "@/lib/data-format-generate/transfer-to-formatted";
 import { extractImageLocation } from "@/lib/data-format-generate/extract-image-location";
 // import { fetchAddress } from "@/lib/data-format-generate/fetch-address";
@@ -21,6 +22,10 @@ export async function ActionDataFormmatLocate() {
   // if (!mergeLocations.success) {
   //   return mergeLocations;
   // }
+
+  // マップページのキャッシュを再検証（本番環境でデータが反映されるように）
+  revalidatePath("/");
+
   return {
     success: true,
     message: "データのフォーマットが完了しました",
