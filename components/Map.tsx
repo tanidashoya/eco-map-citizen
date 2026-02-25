@@ -67,13 +67,26 @@ export default function Map({
         point.items[0].imageUrl ?? "",
         point.items.length,
       );
+      // 緯度に基づいてz-indexを設定（南にあるマーカーが上に表示される）
+      // これによりマーカーの重なり順が一定になり、ちらつきを防ぐ
+      const zIndexOffset = Math.round((90 - point.lat) * 1000);
       return (
         <Marker
           key={`${point.lat}-${point.lng}-${index}`}
           icon={icon}
           position={[point.lat, point.lng]}
+          zIndexOffset={zIndexOffset}
           eventHandlers={{
             click: () => handleClick(point),
+            // ホバー時に最前面に表示
+            mouseover: (e) => {
+              const marker = e.target;
+              marker.setZIndexOffset(zIndexOffset + 10000);
+            },
+            mouseout: (e) => {
+              const marker = e.target;
+              marker.setZIndexOffset(zIndexOffset);
+            },
           }}
         />
       );

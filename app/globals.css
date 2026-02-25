@@ -197,3 +197,26 @@
 .leaflet-container {
   height: 100vh !important;
 }
+
+/* マーカーのホバー効果
+.leaflet-marker-icon {
+  transition: transform 0.15s ease-out;
+}
+
+.leaflet-marker-icon:hover {
+  transform: scale(1.1);
+} */
+
+/* マーカー画像ローディングスピナー */
+.marker-spinner {
+  animation: marker-spin 0.8s linear infinite;
+}
+
+@keyframes marker-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

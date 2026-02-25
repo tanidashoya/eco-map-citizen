@@ -11,7 +11,7 @@ interface LocationItemProps {
 }
 
 export default function LocationItem({ item, clusterId, destination }: LocationItemProps) {
-  const name = item.name || "匿名ユーザー";
+  const name = item.name || "匿名";
   const router = useRouter();
   const handleClick = (point: ClusterItem) => {
     router.push(`/?cluster=${clusterId}&item=${point.uniqueId}`);

@@ -57,8 +57,18 @@ export async function extractImageLocation(): Promise<ActionResponse> {
       const rowNum = i + 1; // スプレッドシートは1-indexed
       const lat = tags.GPSLatitude ?? "-";
       const lng = tags.GPSLongitude ?? "-";
+      // EXIFのDateTimeOriginalはタイムゾーン情報を持たないローカル時間
+      // 日本で撮影された場合は日本時間として記録されているため、そのまま保存
       const dateTime = tags.DateTimeOriginal
-        ? new Date(tags.DateTimeOriginal * 1000).toISOString()
+        ? new Date(tags.DateTimeOriginal * 1000).toLocaleString("ja-JP", {
+            timeZone: "UTC", // EXIFの値をそのまま使用（ローカル時間として扱う）
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            // second: "2-digit",
+          })
         : "-";
 
       // H〜L列を一括更新 (H:緯度, I:経度, J:撮影日時, K:撮影住所(空), L:処理済み)

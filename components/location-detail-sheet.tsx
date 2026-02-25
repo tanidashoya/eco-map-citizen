@@ -8,7 +8,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Calendar, MapPin, MessageCircle, User } from "lucide-react";
+import { Calendar, MessageCircle, User } from "lucide-react";
 import GoogleMapButton from "./google-map-button";
 
 interface LocationDetailSheetProps {
@@ -33,23 +33,10 @@ export default function LocationDetailSheet({
     return null;
   }
 
-  const nameFormatted = item.name ? item.name : "匿名ユーザー";
+  const nameFormatted = item.name ? item.name : "匿名";
 
-  const shootingDateFormatted = item.shootingDate
-    ? new Date(item.shootingDate).toLocaleDateString("ja-JP", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : "不明";
-
-  const locationFormatted = item.location
-    ? item.location
-        .split(" ")
-        .reverse()
-        .filter((part) => part !== "日本" && !/^\d{3}-?\d{4}$/.test(part))
-        .join(" ")
-    : "不明";
+  // EXIFから取得した日時は既に日本時間としてフォーマット済み
+  const shootingDateFormatted = item.shootingDate || "不明";
 
   const commentFormatted = item.comment ? item.comment : "コメントがありません";
 
@@ -75,46 +62,15 @@ export default function LocationDetailSheet({
               投稿の詳細情報
             </SheetDescription>
           </SheetHeader>
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:mt-6">
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 flex-1">
             <Image
               src={item.imageUrl || ""}
               alt="投稿画像"
               width={500}
               height={500}
-              className="lg:w-[33%] lg:h-[33%] w-[90%] h-[90%] object-cover rounded my-4"
+              className="lg:w-[35%] lg:h-[35%] w-[90%] h-[90%] object-cover rounded my-4"
             />
-            <div className="flex flex-col justify-center gap-8 px-4 lg:px-6 mb-12">
-              <div className="flex flex-col justify-center gap-4 lg:gap-2">
-                <div className="flex items-center gap-2 border border-gray-100 bg-green-500 rounded-md w-fit px-4 py-1">
-                  <User className="size-6 text-white" />
-                  <span className="text-sm lg:text-base font-bold text-white">
-                    投稿者
-                  </span>
-                </div>
-                <p className="text-base lg:text-base px-4">{nameFormatted}</p>
-              </div>
-              <div className="flex flex-col justify-center gap-4 lg:gap-2">
-                <div className="flex items-center gap-2 border border-gray-100 bg-green-500 rounded-md w-fit px-4 py-1">
-                  <Calendar className="size-6 text-white" />
-                  <span className="text-sm lg:text-base font-bold text-white">
-                    撮影時間
-                  </span>
-                </div>
-                <p className="text-base lg:text-base px-4">
-                  {shootingDateFormatted}
-                </p>
-              </div>
-              <div className="flex flex-col justify-center gap-4 lg:gap-2">
-                <div className="flex items-center gap-2 border border-gray-100 bg-green-500 rounded-md w-fit px-4 py-1">
-                  <MapPin className="size-6 text-white" />
-                  <span className="text-sm lg:text-base font-bold text-white">
-                    撮影場所
-                  </span>
-                </div>
-                <p className="text-base lg:text-base px-4">
-                  {locationFormatted}
-                </p>
-              </div>
+            <div className="flex flex-col justify-center gap-4 lg:px-6">
               <div className="flex flex-col justify-center gap-4 lg:gap-2">
                 <div className="flex items-center gap-2 border border-gray-100 bg-green-500 rounded-md w-fit px-4 py-1">
                   <MessageCircle className="size-6 text-white" />
@@ -122,9 +78,23 @@ export default function LocationDetailSheet({
                     コメント
                   </span>
                 </div>
-                <p className="text-base lg:text-base px-4">
-                  {commentFormatted}
-                </p>
+                <div className="flex flex-col justify-center gap-4 lg:gap-2 bg-gray-100 rounded-md p-4">
+                  <p className="text-base lg:text-base px-4">
+                    {commentFormatted}
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-center gap-6">
+                <div className="flex items-center gap-2 text-center">
+                  <User className="size-6" />
+                  <span className="text-sm lg:text-base">{nameFormatted}</span>
+                </div>
+                <div className="flex items-center gap-2 text-center">
+                  <Calendar className="size-6" />
+                  <span className="text-sm lg:text-base">
+                    {shootingDateFormatted}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

@@ -45,7 +45,7 @@ export async function getSheetData(
   return (response.data.values as string[][]) || [];
 }
 
-//指定したシート（sheetName）にデータ（values）を追加
+//指定したシート（sheetName）にデータ（values）を追加（最終行の次に追記）
 export async function appendSheetData(
   sheetName: string,
   values: (string | number | boolean)[][],
@@ -54,6 +54,7 @@ export async function appendSheetData(
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:Z`,
     valueInputOption: "USER_ENTERED",
+    insertDataOption: "INSERT_ROWS", // 明示的に新しい行を挿入
     requestBody: { values },
   });
 }
@@ -202,16 +203,24 @@ export async function getMapPoints() {
   const idxLocation = headers.indexOf("撮影住所");
 
   return dataRows
-    .filter((row) => row[idxLat] && row[idxLng])
     .map((row) => ({
       uniqueId: row[idxUniqueId] || "",
       stamp: row[idxStamp] || "",
       lat: parseFloat(row[idxLat]),
       lng: parseFloat(row[idxLng]),
-      name: row[idxName] || "匿名ユーザー",
+      name: row[idxName] || "",
       imageUrl: convertDriveUrl(row[idxImage]),
       comment: row[idxComment] || "",
       shootingDate: row[idxDate] || "",
       location: row[idxLocation] || "",
-    }));
+    }))
+    .filter((point) => {
+      if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng))
+        return false;
+      if (point.lat < -90 || point.lat > 90) return false;
+      if (point.lng < -180 || point.lng > 180) return false;
+      if (point.lat === 0 && point.lng === 0) return false;
+      if (!point.uniqueId) return false;
+      return true;
+    });
 }
