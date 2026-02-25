@@ -1,8 +1,8 @@
 import { getMapPoints } from "@/lib/google-api/google-api";
 import MapWrapper from "@/components/map-wrapper";
 
-// キャッシュを無効化して毎回最新データを取得
-export const dynamic = "force-dynamic";
+// // キャッシュを無効化して毎回最新データを取得
+// export const dynamic = "force-dynamic";
 
 export default async function Home() {
   // マップ表示用のデータを取得
