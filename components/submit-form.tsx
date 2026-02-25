@@ -5,7 +5,7 @@
 // 役割: フォーム全体の状態管理・バリデーション・送信処理
 // 画像UIは ImageUploader に委譲
 
-import { useActionState, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   MapPin,
   User,
@@ -30,46 +30,43 @@ import { toast } from "sonner";
 import { ImageUploader } from "@/components/image-uploader";
 import { PreviewImage } from "@/types/form";
 import { ADDRESS_OPTIONS } from "@/lib/constants/prefectures";
-import { submitPost, SubmitPostResult } from "@/app/actions/action-submit-post";
 
 export function SubmitForm() {
-  //DOMで保持できない値を状態として保持するためのuseState
   const [image, setImage] = useState<PreviewImage | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [address, setAddress] = useState("");
-  //フォームDOMに直接アクセスするための参照（アンコントロール）
-  // ※現在は入力値を状態として保持せずに入力値をDOMが保持している
-  // その値をformRef.current?.reset()でリセットする
+  const [isPending, setIsPending] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // useActionStateでServer Actionの状態を管理
-  //async以下がformActionの処理内容
-  //useActionState は「フォーム送信に関わる非同期処理全体」に対して、状態管理・ローディング追跡・form統合を追加するフックである
-  //useActionState< A, B > の
-  //A = state の型
-  //B = action に渡される引数の型
-  //を定義している。 ⇒formActionの実行結果（stateとして保持される値）の型
-  const [, formAction, isPending] = useActionState<
-    SubmitPostResult | null,
-    FormData
-  >(async (_prevState, formData) => {
-    try {
-      // クライアント側バリデーション
-      if (!image) {
-        toast.error("写真を1枚追加してください");
-        return { success: false, message: "写真を1枚追加してください" };
-      }
-      if (!agreed) {
-        toast.error("利用規約への同意が必要です");
-        return { success: false, message: "利用規約への同意が必要です" };
-      }
+  // フォーム送信処理（API Route経由）
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-      // 画像とタイムスタンプを追加
+    // クライアント側バリデーション
+    if (!image) {
+      toast.error("写真を1枚追加してください");
+      return;
+    }
+    if (!agreed) {
+      toast.error("利用規約への同意が必要です");
+      return;
+    }
+
+    setIsPending(true);
+
+    try {
+      // FormDataを作成
+      const formData = new FormData(formRef.current!);
       formData.append("image", image.file);
       formData.append("timestamp", new Date().toISOString());
 
-      // Server Actionを呼び出し
-      const result = await submitPost(formData);
+      // API Routeにfetchで送信
+      const response = await fetch("/api/submit-post", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
 
       if (result.success) {
         toast.success(result.message);
@@ -81,22 +78,18 @@ export function SubmitForm() {
       } else {
         toast.error(result.message);
       }
-      return result;
     } catch (error) {
-      // エラーの詳細をコンソールに出力（デバッグ用）
       console.error("フォーム送信エラー:", error);
       const errorMessage =
         error instanceof Error ? error.message : "不明なエラー";
       toast.error(`送信エラー: ${errorMessage}`);
-      return { success: false, message: errorMessage };
+    } finally {
+      setIsPending(false);
     }
-  }, null); //useActionStateの初期値（第一引数：実行する関数（この実行する関数に_prevStateとformDataが渡される）、第二引数：初期値）
+  };
 
-  // ---- レンダリング ----
-  //actionはServer Actionを呼び出すための属性(useActionStateが定義されている場合には第2引数の関数が実行される)
-  //入力欄の値をstateではなくDOMが保持しておりその値をformRef.current?.reset()でリセットする
   return (
-    <form ref={formRef} action={formAction} className="space-y-8">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
       {/* 画像アップロード（ImageUploaderに委譲） */}
       <ImageUploader
         image={image}
@@ -220,7 +213,6 @@ export function SubmitForm() {
           >
             投稿された写真・情報は地域の自然環境データとして公開されます。
             個人情報の取り扱いおよび利用規約に同意の上、送信してください。
-            {/* TODO: 利用規約ページのリンクを追加する */}
           </Label>
         </div>
       </div>

@@ -1,8 +1,7 @@
 import { getMapPoints } from "@/lib/google-api/google-api";
 import MapWrapper from "@/components/map-wrapper";
 
-// // キャッシュを無効化して毎回最新データを取得
-// export const dynamic = "force-dynamic";
+// adminでフォーマット実行時にrevalidatePathで即時更新
 
 export default async function Home() {
   // マップ表示用のデータを取得
