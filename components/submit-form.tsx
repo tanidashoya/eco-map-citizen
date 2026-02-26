@@ -55,46 +55,63 @@ export function SubmitForm() {
     SubmitPostResult | null,
     FormData
   >(async (_prevState, formData) => {
-    // クライアント側バリデーション
-    if (!category) {
-      toast.error("カテゴリを選択してください");
-      return { success: false, message: "カテゴリを選択してください" };
-    }
-    if (!capturedImage) {
-      toast.error("写真を撮影してください");
-      return { success: false, message: "写真を撮影してください" };
-    }
-    if (!capturedImage.location) {
-      toast.error("位置情報が取得できていません。再度撮影してください。");
-      return { success: false, message: "位置情報が取得できていません" };
-    }
-    if (!agreed) {
-      toast.error("利用規約への同意が必要です");
-      return { success: false, message: "利用規約への同意が必要です" };
-    }
+    try {
+      // クライアント側バリデーション
+      if (!category) {
+        toast.error("カテゴリを選択してください");
+        return { success: false, message: "カテゴリを選択してください" };
+      }
+      if (!capturedImage) {
+        toast.error("写真を撮影してください");
+        return { success: false, message: "写真を撮影してください" };
+      }
+      if (!capturedImage.location) {
+        toast.error("位置情報が取得できていません。再度撮影してください。");
+        return { success: false, message: "位置情報が取得できていません" };
+      }
+      if (!agreed) {
+        toast.error("利用規約への同意が必要です");
+        return { success: false, message: "利用規約への同意が必要です" };
+      }
 
-    // カテゴリ、画像、位置情報、撮影時間を追加
-    formData.append("category", category);
-    formData.append("image", capturedImage.file);
-    formData.append("latitude", capturedImage.location.lat.toString());
-    formData.append("longitude", capturedImage.location.lng.toString());
-    formData.append("capturedAt", capturedImage.capturedAt); // 撮影時刻
+      // デバッグ用：送信データの確認
+      console.log("送信データ:", {
+        category,
+        fileSize: capturedImage.file.size,
+        fileName: capturedImage.file.name,
+        location: capturedImage.location,
+        capturedAt: capturedImage.capturedAt,
+      });
 
-    // Server Actionを呼び出し
-    const result = await submitPost(formData);
+      // カテゴリ、画像、位置情報、撮影時間を追加
+      formData.append("category", category);
+      formData.append("image", capturedImage.file);
+      formData.append("latitude", capturedImage.location.lat.toString());
+      formData.append("longitude", capturedImage.location.lng.toString());
+      formData.append("capturedAt", capturedImage.capturedAt);
 
-    if (result.success) {
-      toast.success(result.message);
-      // フォームリセット
-      formRef.current?.reset();
-      setCapturedImage(null);
-      setCategory("");
-      setAgreed(false);
-      setAddress("");
-    } else {
-      toast.error(result.message);
+      // Server Actionを呼び出し
+      const result = await submitPost(formData);
+
+      if (result.success) {
+        toast.success(result.message);
+        // フォームリセット
+        formRef.current?.reset();
+        setCapturedImage(null);
+        setCategory("");
+        setAgreed(false);
+        setAddress("");
+      } else {
+        toast.error(result.message);
+      }
+      return result;
+    } catch (error) {
+      console.error("送信エラー:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "不明なエラー";
+      toast.error(`送信に失敗しました: ${errorMessage}`);
+      return { success: false, message: errorMessage };
     }
-    return result;
   }, null);
 
   return (

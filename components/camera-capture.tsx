@@ -23,6 +23,79 @@ const GEO_OPTIONS: PositionOptions = {
   timeout: 10000, // 10秒でタイムアウト
   maximumAge: 0, // キャッシュを使わず常に最新の位置を取得
 };
+// 画像圧縮設定
+const MAX_IMAGE_WIDTH = 1920; // 最大幅
+const MAX_IMAGE_HEIGHT = 1080; // 最大高さ
+const JPEG_QUALITY = 0.8; // JPEG品質（0-1）
+
+// ----------------------------------------------------------------
+// ユーティリティ関数
+// ----------------------------------------------------------------
+
+/**
+ * 画像を圧縮・リサイズする
+ * Canvas APIを使用してブラウザ側で処理
+ */
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      // リサイズ後のサイズを計算（アスペクト比を維持）
+      let { width, height } = img;
+      if (width > MAX_IMAGE_WIDTH) {
+        height = (height * MAX_IMAGE_WIDTH) / width;
+        width = MAX_IMAGE_WIDTH;
+      }
+      if (height > MAX_IMAGE_HEIGHT) {
+        width = (width * MAX_IMAGE_HEIGHT) / height;
+        height = MAX_IMAGE_HEIGHT;
+      }
+
+      // Canvasに描画
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas context not available"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // JPEG形式でBlobに変換
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Failed to compress image"));
+            return;
+          }
+          // Blobを新しいFileオブジェクトに変換
+          const compressedFile = new File([blob], file.name, {
+            type: "image/jpeg",
+            lastModified: Date.now(),
+          });
+          console.log(
+            `画像圧縮: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
+          );
+          resolve(compressedFile);
+        },
+        "image/jpeg",
+        JPEG_QUALITY,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to load image"));
+    };
+
+    img.src = url;
+  });
+}
 
 // ----------------------------------------------------------------
 // コンポーネント
@@ -114,10 +187,18 @@ export function CameraCapture({
       toast.warning("位置情報を取得できませんでした。再度撮影してください。");
     }
 
+    // 画像を圧縮（アップロード時間短縮・タイムアウト回避）
+    let processedFile = file;
+    try {
+      processedFile = await compressImage(file);
+    } catch (error) {
+      console.warn("画像圧縮に失敗、元のファイルを使用:", error);
+    }
+
     // 親コンポーネントにデータを返す
     const capturedData: CapturedImage = {
-      previewUrl: URL.createObjectURL(file),
-      file,
+      previewUrl: URL.createObjectURL(processedFile),
+      file: processedFile,
       location,
       capturedAt: new Date().toISOString(), // 撮影時刻を記録
     };
