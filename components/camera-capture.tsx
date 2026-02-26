@@ -23,10 +23,9 @@ const GEO_OPTIONS: PositionOptions = {
   timeout: 10000, // 10秒でタイムアウト
   maximumAge: 0, // キャッシュを使わず常に最新の位置を取得
 };
-// 画像圧縮設定
-const MAX_IMAGE_WIDTH = 1920; // 最大幅
-const MAX_IMAGE_HEIGHT = 1080; // 最大高さ
-const JPEG_QUALITY = 0.8; // JPEG品質（0-1）
+// 画像圧縮設定（スマホのメモリ制限を考慮して小さめに設定）
+const MAX_IMAGE_SIZE = 1280; // 最大幅/高さ（メモリ節約のため小さめ）
+const JPEG_QUALITY = 0.7; // JPEG品質（0-1）
 
 // ----------------------------------------------------------------
 // ユーティリティ関数
@@ -34,67 +33,51 @@ const JPEG_QUALITY = 0.8; // JPEG品質（0-1）
 
 /**
  * 画像を圧縮・リサイズする
- * Canvas APIを使用してブラウザ側で処理
+ * createImageBitmapを使用してメモリ効率を改善（スマホ対応）
  */
-function compressImage(file: File): Promise<File> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-
-      // リサイズ後のサイズを計算（アスペクト比を維持）
-      let { width, height } = img;
-      if (width > MAX_IMAGE_WIDTH) {
-        height = (height * MAX_IMAGE_WIDTH) / width;
-        width = MAX_IMAGE_WIDTH;
-      }
-      if (height > MAX_IMAGE_HEIGHT) {
-        width = (width * MAX_IMAGE_HEIGHT) / height;
-        height = MAX_IMAGE_HEIGHT;
-      }
-
-      // Canvasに描画
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        reject(new Error("Canvas context not available"));
-        return;
-      }
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // JPEG形式でBlobに変換
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error("Failed to compress image"));
-            return;
-          }
-          // Blobを新しいFileオブジェクトに変換
-          const compressedFile = new File([blob], file.name, {
-            type: "image/jpeg",
-            lastModified: Date.now(),
-          });
-          console.log(
-            `画像圧縮: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
-          );
-          resolve(compressedFile);
-        },
-        "image/jpeg",
-        JPEG_QUALITY,
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Failed to load image"));
-    };
-
-    img.src = url;
+async function compressImage(file: File): Promise<File> {
+  // createImageBitmapでリサイズオプションを指定（メモリ効率が良い）
+  const bitmap = await createImageBitmap(file, {
+    resizeWidth: MAX_IMAGE_SIZE,
+    resizeHeight: MAX_IMAGE_SIZE,
+    resizeQuality: "medium",
   });
+
+  // Canvasに描画
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    bitmap.close(); // メモリ解放
+    throw new Error("Canvas context not available");
+  }
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close(); // 使用後すぐにメモリ解放
+
+  // JPEG形式でBlobに変換
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY);
+  });
+
+  // Canvasのメモリを解放
+  canvas.width = 0;
+  canvas.height = 0;
+
+  if (!blob) {
+    throw new Error("Failed to compress image");
+  }
+
+  const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+
+  console.log(
+    `画像圧縮: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
+  );
+
+  return compressedFile;
 }
 
 // ----------------------------------------------------------------
