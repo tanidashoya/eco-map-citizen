@@ -82,15 +82,12 @@ export function CameraCapture({
 
   // 撮影ボタン押下時のハンドラ
   const handleCaptureClick = async () => {
-    // 位置情報の取得を開始（非同期で実行）
-    const locationPromise = getLocation();
-
-    // 位置情報取得と並行してカメラを起動
-    fileInputRef.current?.click();
-
-    // 位置情報取得完了を待ち、pendingLocationRefに保存
-    const location = await locationPromise;
+    // 位置情報を先に取得（スマホではカメラ起動時にブラウザがバックグラウンドになるため）
+    const location = await getLocation();
     pendingLocationRef.current = location;
+
+    // 位置情報取得完了後にカメラを起動
+    fileInputRef.current?.click();
   };
 
   // ファイル選択（撮影完了）時のハンドラ
