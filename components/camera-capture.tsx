@@ -23,63 +23,6 @@ const GEO_OPTIONS: PositionOptions = {
   timeout: 10000, // 10秒でタイムアウト
   maximumAge: 0, // キャッシュを使わず常に最新の位置を取得
 };
-// 画像圧縮設定（スマホのメモリ制限を考慮して小さめに設定）
-const MAX_IMAGE_SIZE = 1280; // 最大幅/高さ（メモリ節約のため小さめ）
-const JPEG_QUALITY = 0.7; // JPEG品質（0-1）
-
-// ----------------------------------------------------------------
-// ユーティリティ関数
-// ----------------------------------------------------------------
-
-/**
- * 画像を圧縮・リサイズする
- * createImageBitmapを使用してメモリ効率を改善（スマホ対応）
- */
-async function compressImage(file: File): Promise<File> {
-  // createImageBitmapでリサイズオプションを指定（メモリ効率が良い）
-  const bitmap = await createImageBitmap(file, {
-    resizeWidth: MAX_IMAGE_SIZE,
-    resizeHeight: MAX_IMAGE_SIZE,
-    resizeQuality: "medium",
-  });
-
-  // Canvasに描画
-  const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    bitmap.close(); // メモリ解放
-    throw new Error("Canvas context not available");
-  }
-  ctx.drawImage(bitmap, 0, 0);
-  bitmap.close(); // 使用後すぐにメモリ解放
-
-  // JPEG形式でBlobに変換
-  const blob = await new Promise<Blob | null>((resolve) => {
-    canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY);
-  });
-
-  // Canvasのメモリを解放
-  canvas.width = 0;
-  canvas.height = 0;
-
-  if (!blob) {
-    throw new Error("Failed to compress image");
-  }
-
-  const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
-    type: "image/jpeg",
-    lastModified: Date.now(),
-  });
-
-  console.log(
-    `画像圧縮: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
-  );
-
-  return compressedFile;
-}
-
 // ----------------------------------------------------------------
 // コンポーネント
 // ----------------------------------------------------------------
@@ -170,18 +113,11 @@ export function CameraCapture({
       toast.warning("位置情報を取得できませんでした。再度撮影してください。");
     }
 
-    // 画像を圧縮（アップロード時間短縮・タイムアウト回避）
-    let processedFile = file;
-    try {
-      processedFile = await compressImage(file);
-    } catch (error) {
-      console.warn("画像圧縮に失敗、元のファイルを使用:", error);
-    }
-
     // 親コンポーネントにデータを返す
+    // 画像圧縮はサーバー側（sharp）で行うため、クライアントでは元のファイルを使用
     const capturedData: CapturedImage = {
-      previewUrl: URL.createObjectURL(processedFile),
-      file: processedFile,
+      previewUrl: URL.createObjectURL(file),
+      file,
       location,
       capturedAt: new Date().toISOString(), // 撮影時刻を記録
     };
