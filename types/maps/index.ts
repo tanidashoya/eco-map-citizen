@@ -1,17 +1,14 @@
 export interface Point {
   uniqueId: string;
-  stamp: string;
-  lat: number;
-  lng: number;
+  category: string;
+  imageUrl: string;
   name?: string;
-  imageUrl?: string;
+  address?: string;
+  birthdate?: string;
   comment?: string;
-  shootingDate?: string;
-  location?: string;
-}
-
-export interface MapWrapperProps {
-  pointsWithImages: Point[];
+  latitude: number;
+  longitude: number;
+  shootingDate: string;
 }
 
 export interface MapProps {
@@ -23,17 +20,16 @@ export interface MapProps {
 
 export interface ClusterItem {
   uniqueId: string;
-  stamp: string;
+  category: string;
   name?: string;
-  imageUrl?: string;
+  imageUrl: string;
   comment?: string;
-  shootingDate?: string;
-  location?: string;
+  shootingDate: string;
 }
 
 export interface MergedPoint {
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
   items: ClusterItem[];
 }
 

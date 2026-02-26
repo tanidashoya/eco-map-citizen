@@ -12,49 +12,67 @@ export type SubmitPostResult =
 /**
  * 投稿フォームのServer Action
  * FormDataを受け取り、投稿処理を実行する
+ * 位置情報はGeolocation APIで取得したものをクライアントから受け取る
  */
 export async function submitPost(
   formData: FormData,
 ): Promise<SubmitPostResult> {
   try {
     // FormDataから値を取得
+    const category = (formData.get("category") as string) ?? "";
     const image = formData.get("image") as File | null;
     const name = (formData.get("name") as string) ?? "";
     const address = (formData.get("address") as string) ?? "";
     const birthdate = (formData.get("birthdate") as string) ?? "";
     const comment = (formData.get("comment") as string) ?? "";
-    const timestamp = (formData.get("timestamp") as string) ?? "";
+    // Geolocation APIで取得した位置情報
+    const latitude = (formData.get("latitude") as string) ?? "";
+    const longitude = (formData.get("longitude") as string) ?? "";
+    // 撮影時刻
+    const capturedAt = (formData.get("capturedAt") as string) ?? "";
 
     // バリデーション
+    if (!category) {
+      return { success: false, message: "カテゴリが必要です" };
+    }
     if (!image || image.size === 0) {
       return { success: false, message: "写真が必要です" };
     }
+    if (!latitude || !longitude) {
+      return { success: false, message: "位置情報が必要です" };
+    }
 
-    // const buffer = await image.arrayBuffer();
-    // 正しい（BufferはArrayBufferからの変換が必要）
+    // 画像をGoogle Driveにアップロード
     const buffer = Buffer.from(await image.arrayBuffer());
-    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID!; //保存先のgoogle driveのフォルダーID
-    const mimeType = image.type; //画像のMIMEタイプ
-    const imageUrl = await uploadImageToDrive(buffer, folderId, mimeType); //画像をGoogle Driveにアップロード
+    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID!;
+    const mimeType = image.type;
+    const imageUrl = await uploadImageToDrive(buffer, folderId, mimeType);
     console.log("imageUrl", imageUrl);
 
-    //スプレッドシートに追記するデータ(リストの順番通りに差し込まれる)
+    // スプレッドシートに追記するデータ
+    // 列順: 画像カテゴリ, 画像URL, お名前, お住まいの地域, 生年月日, この場所についての一言, 緯度, 経度, 撮影時間
     const values = [
-      timestamp,
+      category,
+      imageUrl,
       name.trim(),
       address,
       birthdate,
-      imageUrl,
       comment.trim(),
+      latitude,
+      longitude,
+      capturedAt,
     ];
-    await appendSheetData("user_input", [values]); //スプレッドシートにデータを追記
+    await appendSheetData("user_input", [values]);
 
     console.log("投稿データ:", {
-      timestamp,
+      category,
       name: name.trim(),
       address,
       birthdate,
       comment: comment.trim(),
+      latitude,
+      longitude,
+      capturedAt,
       imageSize: image.size,
       imageName: image.name,
     });

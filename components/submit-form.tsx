@@ -3,9 +3,9 @@
 // components/submit-form.tsx
 //
 // 役割: フォーム全体の状態管理・バリデーション・送信処理
-// 画像UIは ImageUploader に委譲
+// 画像撮影UIは CameraCapture に委譲
 
-import { useState, useRef } from "react";
+import { useActionState, useState, useRef } from "react";
 import {
   MapPin,
   User,
@@ -27,74 +27,125 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImageUploader } from "@/components/image-uploader";
-import { PreviewImage } from "@/types/form";
+import { CameraCapture } from "@/components/camera-capture";
+import { CapturedImage } from "@/types/form";
 import { ADDRESS_OPTIONS } from "@/lib/constants/prefectures";
+import { submitPost, SubmitPostResult } from "@/app/actions/action-submit-post";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Leaf, Mountain } from "lucide-react";
+
+// カテゴリの選択肢
+const CATEGORY_OPTIONS = [
+  { value: "景観", label: "景観", icon: Mountain },
+  { value: "生物", label: "生物", icon: Leaf },
+] as const;
 
 export function SubmitForm() {
-  const [image, setImage] = useState<PreviewImage | null>(null);
+  // 撮影した画像と位置情報を保持
+  const [capturedImage, setCapturedImage] = useState<CapturedImage | null>(null);
+  const [category, setCategory] = useState<string>(""); // カテゴリ選択
   const [agreed, setAgreed] = useState(false);
   const [address, setAddress] = useState("");
-  const [isPending, setIsPending] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // フォーム送信処理（API Route経由）
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+  // useActionStateでServer Actionの状態を管理
+  const [, formAction, isPending] = useActionState<
+    SubmitPostResult | null,
+    FormData
+  >(async (_prevState, formData) => {
     // クライアント側バリデーション
-    if (!image) {
-      toast.error("写真を1枚追加してください");
-      return;
+    if (!category) {
+      toast.error("カテゴリを選択してください");
+      return { success: false, message: "カテゴリを選択してください" };
+    }
+    if (!capturedImage) {
+      toast.error("写真を撮影してください");
+      return { success: false, message: "写真を撮影してください" };
+    }
+    if (!capturedImage.location) {
+      toast.error("位置情報が取得できていません。再度撮影してください。");
+      return { success: false, message: "位置情報が取得できていません" };
     }
     if (!agreed) {
       toast.error("利用規約への同意が必要です");
-      return;
+      return { success: false, message: "利用規約への同意が必要です" };
     }
 
-    setIsPending(true);
+    // カテゴリ、画像、位置情報、撮影時間を追加
+    formData.append("category", category);
+    formData.append("image", capturedImage.file);
+    formData.append("latitude", capturedImage.location.lat.toString());
+    formData.append("longitude", capturedImage.location.lng.toString());
+    formData.append("capturedAt", capturedImage.capturedAt); // 撮影時刻
 
-    try {
-      // FormDataを作成
-      const formData = new FormData(formRef.current!);
-      formData.append("image", image.file);
-      formData.append("timestamp", new Date().toISOString());
+    // Server Actionを呼び出し
+    const result = await submitPost(formData);
 
-      // API Routeにfetchで送信
-      const response = await fetch("/api/submit-post", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success(result.message);
-        // フォームリセット
-        formRef.current?.reset();
-        setImage(null);
-        setAgreed(false);
-        setAddress("");
-      } else {
-        toast.error(result.message);
-      }
-    } catch (error) {
-      console.error("フォーム送信エラー:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "不明なエラー";
-      toast.error(`送信エラー: ${errorMessage}`);
-    } finally {
-      setIsPending(false);
+    if (result.success) {
+      toast.success(result.message);
+      // フォームリセット
+      formRef.current?.reset();
+      setCapturedImage(null);
+      setCategory("");
+      setAgreed(false);
+      setAddress("");
+    } else {
+      toast.error(result.message);
     }
-  };
+    return result;
+  }, null);
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
-      {/* 画像アップロード（ImageUploaderに委譲） */}
-      <ImageUploader
-        image={image}
+    <form ref={formRef} action={formAction} className="space-y-8">
+      {/* カテゴリ選択（ラジオボタン） */}
+      <div className="space-y-3">
+        <Label className="text-base font-medium">
+          カテゴリ <span className="text-destructive">*</span>
+        </Label>
+        <RadioGroup
+          value={category}
+          onValueChange={setCategory}
+          disabled={isPending}
+          className="flex gap-4"
+        >
+          {CATEGORY_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all ${
+                category === option.value
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-muted/30 hover:bg-muted"
+              } ${isPending ? "cursor-not-allowed opacity-50" : ""}`}
+            >
+              <RadioGroupItem
+                value={option.value}
+                id={option.value}
+                className="sr-only"
+              />
+              <option.icon
+                className={`size-5 ${
+                  category === option.value
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              />
+              <span
+                className={`text-sm font-medium ${
+                  category === option.value ? "text-primary" : ""
+                }`}
+              >
+                {option.label}
+              </span>
+            </label>
+          ))}
+        </RadioGroup>
+      </div>
+
+      {/* カメラ撮影（CameraCaptureに委譲） */}
+      <CameraCapture
+        capturedImage={capturedImage}
         disabled={isPending}
-        onImageChange={setImage}
+        onCapture={setCapturedImage}
       />
 
       {/* 名前（任意） */}
@@ -220,7 +271,7 @@ export function SubmitForm() {
       {/* 送信ボタン */}
       <Button
         type="submit"
-        disabled={isPending || !agreed || !image}
+        disabled={isPending || !agreed || !category || !capturedImage || !capturedImage.location}
         className="w-full"
         size="lg"
       >

@@ -53,7 +53,7 @@ export default function Map({
       if (point.items.length === 1) {
         router.push(`/?point=${point.items[0].uniqueId}`);
       } else {
-        router.push(`/?cluster=${point.lat}-${point.lng}`);
+        router.push(`/?cluster=${point.latitude}-${point.longitude}`);
       }
     },
     [router],
@@ -69,12 +69,12 @@ export default function Map({
       );
       // 緯度に基づいてz-indexを設定（南にあるマーカーが上に表示される）
       // これによりマーカーの重なり順が一定になり、ちらつきを防ぐ
-      const zIndexOffset = Math.round((90 - point.lat) * 1000);
+      const zIndexOffset = Math.round((90 - point.latitude) * 1000);
       return (
         <Marker
-          key={`${point.lat}-${point.lng}-${index}`}
+          key={`${point.latitude}-${point.longitude}-${index}`}
           icon={icon}
-          position={[point.lat, point.lng]}
+          position={[point.latitude, point.longitude]}
           zIndexOffset={zIndexOffset}
           eventHandlers={{
             click: () => handleClick(point),
@@ -107,7 +107,11 @@ export default function Map({
       <LocationSheet selectedPoint={selectedPoint as MergedPoint} />
       <LocationDetailSheet
         item={selectedPoint?.items[0] ?? null}
-        destination={selectedPoint ? { lat: selectedPoint.lat, lng: selectedPoint.lng } : null}
+        destination={
+          selectedPoint
+            ? { lat: selectedPoint.latitude, lng: selectedPoint.longitude }
+            : null
+        }
         queryKey="point"
       />
       <Attribution mapTypePic={mapTypePic} />

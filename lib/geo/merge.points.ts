@@ -11,22 +11,21 @@ export function mergePoints(points: Point[]): MergedPoint[] {
 
     for (const group of result) {
       const distance = calculateDistance(
-        point.lat,
-        point.lng,
-        group.lat,
-        group.lng,
+        point.latitude,
+        point.longitude,
+        group.latitude,
+        group.longitude,
       );
 
       // すでにあるデータの代表座標と距離が近い場合はマージ
       if (distance <= MERGE_DISTANCE_METERS) {
         group.items.push({
           uniqueId: point.uniqueId,
-          stamp: point.stamp,
+          category: point.category,
           name: point.name,
           imageUrl: point.imageUrl,
           comment: point.comment,
           shootingDate: point.shootingDate,
-          location: point.location,
         });
 
         merged = true;
@@ -37,17 +36,16 @@ export function mergePoints(points: Point[]): MergedPoint[] {
     // 登録されているデータに近い座標がない場合には新しいデータを追加
     if (!merged) {
       result.push({
-        lat: point.lat,
-        lng: point.lng,
+        latitude: point.latitude,
+        longitude: point.longitude,
         items: [
           {
             uniqueId: point.uniqueId,
-            stamp: point.stamp,
+            category: point.category,
             name: point.name,
             imageUrl: point.imageUrl,
             comment: point.comment,
             shootingDate: point.shootingDate,
-            location: point.location,
           },
         ],
       });

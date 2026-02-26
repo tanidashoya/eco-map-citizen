@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from "uuid";
  */
 export async function transferToFormatted(): Promise<ActionResponse> {
   // 1. user_inputから全データを取得
-  const userInputAllData = await getSheetData("user_input", "A:F");
+  const userInputAllData = await getSheetData("user_input", "A:I");
 
   if (userInputAllData.length <= 1) {
     return {
@@ -20,11 +20,21 @@ export async function transferToFormatted(): Promise<ActionResponse> {
 
   // 2. formatted_dataの既存データを取得（重複防止）
   // B列:timestamp, C列:userName, F列:imageUrls を使った複合キーで重複チェック
-  const existingData = await getSheetData("formatted_data", "B:F");
+  const existingData = await getSheetData("formatted_data", "B:J");
   const existingKeys = new Set(
     existingData.slice(1).map((row) => {
-      const [timestamp, userName, , , imageUrls] = row; // B, C, D, E, F列
-      return `${timestamp}|${userName}|${imageUrls}`; // 複合キー
+      const [
+        category,
+        imageUrl,
+        name,
+        address,
+        birthdate,
+        comment,
+        latitude,
+        longitude,
+        shootingDate,
+      ] = row; // B, C, D, E, F, G, H, I, J, K列
+      return `${category}|${imageUrl}|${name}|${address}|${birthdate}|${comment}|${latitude}|${longitude}|${shootingDate}`; // 複合キー
     }),
   );
 
@@ -32,30 +42,37 @@ export async function transferToFormatted(): Promise<ActionResponse> {
   const newRows: string[][] = [];
 
   for (const row of userInputAllData.slice(1)) {
-    // user_inputの列順: A:timestamp, B:name, C:address, D:birthdate, E:imageUrl, F:comment
-    const [timestamp, userName, userAddress, birthDate, imageUrls, comment] =
-      row;
+    // user_inputの列順: A:category, B:imageUrl, C:name, D:address, E:birthdate, F:comment, G:latitude, H:longitude, I:shootingDate, J:location
+    const [
+      category,
+      imageUrl,
+      name,
+      address,
+      birthdate,
+      comment,
+      latitude,
+      longitude,
+      shootingDate,
+    ] = row;
 
     //画像URLがない場合はスキップ
-    if (!imageUrls) continue;
+    if (!imageUrl) continue;
 
     // 複合キーで重複チェック（timestamp + userName + imageUrls）
-    const compositeKey = `${timestamp}|${userName}|${imageUrls}`;
+    const compositeKey = `${category}|${imageUrl}|${name}|${address}|${birthdate}|${comment}|${latitude}|${longitude}|${shootingDate}`;
     if (existingKeys.has(compositeKey)) continue;
 
     newRows.push([
       uuidv4(), // A: ユニークID（画像URLごとに一意）
-      timestamp, // B: タイムスタンプ
-      userName || "", // C: ユーザー名
-      userAddress || "", // D: ユーザー住所
-      birthDate || "", // E: 生年月日
-      imageUrls, // F: 画像URL（1URL） ※※※複数画像入力を許可していた時の名残
+      category, // B: カテゴリ
+      imageUrl, // C: 画像URL
+      name || "", // D: ユーザー名
+      address || "", // E: ユーザー住所
+      birthdate || "", // F: 生年月日
       comment || "", // G: この場所について一言
-      "", // H: 緯度（後で取得）
-      "", // I: 経度
-      "", // J: 撮影日時
-      "", // K: 撮影住所
-      "FALSE", // L: 処理済みフラグ
+      latitude || "", // H: 緯度（後で取得）
+      longitude || "", // I: 経度
+      shootingDate || "", // J: 撮影日時
     ]);
 
     //※※※ユーザーからの投稿が複数画像をOKにしていた時の場合

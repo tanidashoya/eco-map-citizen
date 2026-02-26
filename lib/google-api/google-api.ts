@@ -184,7 +184,7 @@ export async function reverseGeocode(
 // ========== マップ表示用 ==========
 
 export async function getMapPoints() {
-  const rows = await getSheetData("formatted_data", "A:Z");
+  const rows = await getSheetData("formatted_data", "A:J");
 
   if (rows.length === 0) return [];
 
@@ -193,33 +193,35 @@ export async function getMapPoints() {
 
   // ヘッダーからインデックスを取得
   const idxUniqueId = headers.indexOf("ユニークID");
-  const idxStamp = headers.indexOf("タイムスタンプ");
-  const idxName = headers.indexOf("ユーザー名");
-  const idxLat = headers.indexOf("緯度");
-  const idxLng = headers.indexOf("経度");
-  const idxImage = headers.indexOf("画像URL");
-  const idxComment = headers.indexOf("この場所について");
-  const idxDate = headers.indexOf("撮影日時");
-  const idxLocation = headers.indexOf("撮影住所");
+  const idxCategory = headers.indexOf("画像カテゴリ");
+  const idxImageUrl = headers.indexOf("画像ＵＲＬ"); // 全角
+  const idxName = headers.indexOf("お名前");
+  const idxAddress = headers.indexOf("お住まいの地域");
+  const idxBirthdate = headers.indexOf("生年月日");
+  const idxComment = headers.indexOf("この場所についての一言");
+  const idxLatitude = headers.indexOf("緯度");
+  const idxLongitude = headers.indexOf("経度");
+  const idxShootingDate = headers.indexOf("撮影時間"); // 撮影日時→撮影時間
 
   return dataRows
     .map((row) => ({
       uniqueId: row[idxUniqueId] || "",
-      stamp: row[idxStamp] || "",
-      lat: parseFloat(row[idxLat]),
-      lng: parseFloat(row[idxLng]),
+      category: row[idxCategory] || "",
+      imageUrl: convertDriveUrl(row[idxImageUrl]) || "", // Google DriveのURLを画像表示可能な形式に変換
       name: row[idxName] || "",
-      imageUrl: convertDriveUrl(row[idxImage]),
+      address: row[idxAddress] || "",
+      birthdate: row[idxBirthdate] || "",
       comment: row[idxComment] || "",
-      shootingDate: row[idxDate] || "",
-      location: row[idxLocation] || "",
+      latitude: parseFloat(row[idxLatitude]),
+      longitude: parseFloat(row[idxLongitude]),
+      shootingDate: row[idxShootingDate] || "",
     }))
     .filter((point) => {
-      if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng))
+      if (!Number.isFinite(point.latitude) || !Number.isFinite(point.longitude))
         return false;
-      if (point.lat < -90 || point.lat > 90) return false;
-      if (point.lng < -180 || point.lng > 180) return false;
-      if (point.lat === 0 && point.lng === 0) return false;
+      if (point.latitude < -90 || point.latitude > 90) return false;
+      if (point.longitude < -180 || point.longitude > 180) return false;
+      if (point.latitude === 0 && point.longitude === 0) return false;
       if (!point.uniqueId) return false;
       return true;
     });
