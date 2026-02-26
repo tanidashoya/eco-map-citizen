@@ -6,7 +6,7 @@
 // 撮影ボタン押下時に位置情報取得を開始し、撮影完了後に画像と位置情報を親に返す
 
 import { useRef, useState } from "react";
-import { Camera, X, MapPin, Loader2 } from "lucide-react";
+import { Camera, X, MapPin, Loader2, CheckCircle, ImageIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CameraCaptureProps, CapturedImage, GeoLocation } from "@/types/form";
@@ -23,6 +23,63 @@ const GEO_OPTIONS: PositionOptions = {
   timeout: 10000, // 10秒でタイムアウト
   maximumAge: 0, // キャッシュを使わず常に最新の位置を取得
 };
+// サムネイル設定（メモリ節約のため小さく）
+const THUMBNAIL_MAX_SIZE = 300;
+
+// ----------------------------------------------------------------
+// ユーティリティ関数
+// ----------------------------------------------------------------
+
+/**
+ * プレビュー用の小さいサムネイルを作成（メモリ節約）
+ * 失敗した場合はnullを返す
+ */
+async function createThumbnail(file: File): Promise<string | null> {
+  try {
+    // Blob URLを作成
+    const url = URL.createObjectURL(file);
+
+    // Imageを使って読み込み（createImageBitmapより互換性が高い）
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = url;
+    });
+
+    // 元のBlob URLを解放
+    URL.revokeObjectURL(url);
+
+    // サムネイルサイズを計算
+    let { width, height } = img;
+    const scale = Math.min(THUMBNAIL_MAX_SIZE / width, THUMBNAIL_MAX_SIZE / height, 1);
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
+
+    // 小さいCanvasに描画
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return null;
+    }
+    ctx.drawImage(img, 0, 0, width, height);
+
+    // Data URLを取得（小さいのでBase64でOK）
+    const thumbnailUrl = canvas.toDataURL("image/jpeg", 0.6);
+
+    // Canvasのメモリを解放
+    canvas.width = 0;
+    canvas.height = 0;
+
+    return thumbnailUrl;
+  } catch (error) {
+    console.warn("サムネイル作成に失敗:", error);
+    return null;
+  }
+}
+
 // ----------------------------------------------------------------
 // コンポーネント
 // ----------------------------------------------------------------
@@ -113,10 +170,15 @@ export function CameraCapture({
       toast.warning("位置情報を取得できませんでした。再度撮影してください。");
     }
 
+    // プレビュー用の小さいサムネイルを作成（メモリ節約）
+    // サムネイル作成に失敗した場合はBlob URLを使用（メモリ消費のリスクあり）
+    const thumbnailUrl = await createThumbnail(file);
+    const previewUrl = thumbnailUrl ?? URL.createObjectURL(file);
+
     // 親コンポーネントにデータを返す
     // 画像圧縮はサーバー側（sharp）で行うため、クライアントでは元のファイルを使用
     const capturedData: CapturedImage = {
-      previewUrl: URL.createObjectURL(file),
+      previewUrl,
       file,
       location,
       capturedAt: new Date().toISOString(), // 撮影時刻を記録
