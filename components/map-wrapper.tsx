@@ -33,7 +33,7 @@ export default function MapWrapper({
     if (currentLocation) return [currentLocation.lat, currentLocation.lng];
     if (!isLocationLoading) {
       return mergedPoints.length > 0
-        ? [mergedPoints[0].latitude, mergedPoints[0].longitude]
+        ? [mergedPoints[0].lat, mergedPoints[0].lng]
         : [34.78, 132.86];
     }
     return null;

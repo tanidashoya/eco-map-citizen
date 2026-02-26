@@ -11,10 +11,10 @@ export function mergePoints(points: Point[]): MergedPoint[] {
 
     for (const group of result) {
       const distance = calculateDistance(
-        point.latitude,
-        point.longitude,
-        group.latitude,
-        group.longitude,
+        point.lat,
+        point.lng,
+        group.lat,
+        group.lng,
       );
 
       // すでにあるデータの代表座標と距離が近い場合はマージ
@@ -36,8 +36,8 @@ export function mergePoints(points: Point[]): MergedPoint[] {
     // 登録されているデータに近い座標がない場合には新しいデータを追加
     if (!merged) {
       result.push({
-        latitude: point.latitude,
-        longitude: point.longitude,
+        lat: point.lat,
+        lng: point.lng,
         items: [
           {
             uniqueId: point.uniqueId,

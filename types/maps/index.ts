@@ -6,8 +6,8 @@ export interface Point {
   address?: string;
   birthdate?: string;
   comment?: string;
-  latitude: number;
-  longitude: number;
+  lat: number;
+  lng: number;
   shootingDate: string;
 }
 
@@ -28,8 +28,8 @@ export interface ClusterItem {
 }
 
 export interface MergedPoint {
-  latitude: number;
-  longitude: number;
+  lat: number;
+  lng: number;
   items: ClusterItem[];
 }
 

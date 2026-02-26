@@ -212,16 +212,16 @@ export async function getMapPoints() {
       address: row[idxAddress] || "",
       birthdate: row[idxBirthdate] || "",
       comment: row[idxComment] || "",
-      latitude: parseFloat(row[idxLatitude]),
-      longitude: parseFloat(row[idxLongitude]),
+      lat: parseFloat(row[idxLatitude]),
+      lng: parseFloat(row[idxLongitude]),
       shootingDate: row[idxShootingDate] || "",
     }))
     .filter((point) => {
-      if (!Number.isFinite(point.latitude) || !Number.isFinite(point.longitude))
+      if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng))
         return false;
-      if (point.latitude < -90 || point.latitude > 90) return false;
-      if (point.longitude < -180 || point.longitude > 180) return false;
-      if (point.latitude === 0 && point.longitude === 0) return false;
+      if (point.lat < -90 || point.lat > 90) return false;
+      if (point.lng < -180 || point.lng > 180) return false;
+      if (point.lat === 0 && point.lng === 0) return false;
       if (!point.uniqueId) return false;
       return true;
     });

@@ -42,7 +42,9 @@ const CATEGORY_OPTIONS = [
 
 export function SubmitForm() {
   // 撮影した画像と位置情報を保持
-  const [capturedImage, setCapturedImage] = useState<CapturedImage | null>(null);
+  const [capturedImage, setCapturedImage] = useState<CapturedImage | null>(
+    null,
+  );
   const [category, setCategory] = useState<string>(""); // カテゴリ選択
   const [agreed, setAgreed] = useState(false);
   const [address, setAddress] = useState("");
@@ -113,7 +115,7 @@ export function SubmitForm() {
               key={option.value}
               className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all ${
                 category === option.value
-                  ? "border-primary bg-primary/10"
+                  ? "bg-green-500/10 border-green-500"
                   : "border-border bg-muted/30 hover:bg-muted"
               } ${isPending ? "cursor-not-allowed opacity-50" : ""}`}
             >
@@ -271,7 +273,13 @@ export function SubmitForm() {
       {/* 送信ボタン */}
       <Button
         type="submit"
-        disabled={isPending || !agreed || !category || !capturedImage || !capturedImage.location}
+        disabled={
+          isPending ||
+          !agreed ||
+          !category ||
+          !capturedImage ||
+          !capturedImage.location
+        }
         className="w-full"
         size="lg"
       >
