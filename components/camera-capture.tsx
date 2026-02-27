@@ -91,8 +91,6 @@ export function CameraCapture({
 }: CameraCaptureProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
-  // 位置情報を一時的に保持（撮影完了前に取得が完了した場合に備えて）
-  const pendingLocationRef = useRef<GeoLocation | null>(null);
 
   // 位置情報を取得する関数
   const getLocation = (): Promise<GeoLocation | null> => {
@@ -137,12 +135,8 @@ export function CameraCapture({
   };
 
   // 撮影ボタン押下時のハンドラ
-  const handleCaptureClick = async () => {
-    // 位置情報を先に取得（スマホではカメラ起動時にブラウザがバックグラウンドになるため）
-    const location = await getLocation();
-    pendingLocationRef.current = location;
-
-    // 位置情報取得完了後にカメラを起動
+  const handleCaptureClick = () => {
+    // カメラをすぐに起動（位置情報は撮影直後に取得）
     fileInputRef.current?.click();
   };
 
@@ -162,8 +156,8 @@ export function CameraCapture({
       URL.revokeObjectURL(capturedImage.previewUrl);
     }
 
-    // pendingLocationRefから位置情報を取得（まだ取得中の場合はnull）
-    const location = pendingLocationRef.current;
+    // 撮影直後に位置情報を取得（撮影場所をより正確に記録）
+    const location = await getLocation();
 
     // 位置情報が取得できなかった場合は警告
     if (!location) {
@@ -187,7 +181,6 @@ export function CameraCapture({
 
     // 同じファイルを再選択できるようリセット
     e.target.value = "";
-    pendingLocationRef.current = null;
   };
 
   // 削除ボタンのハンドラ

@@ -35,9 +35,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Leaf, Mountain } from "lucide-react";
 
 // カテゴリの選択肢
+//as constを使用することで、カテゴリの選択肢が変更されないことを保証(valueとlabelの型を文字列リテラル型に固定)⇒typeScriptの型安全を保証
 const CATEGORY_OPTIONS = [
-  { value: "景観", label: "景観", icon: Mountain },
-  { value: "生物", label: "生物", icon: Leaf },
+  { value: "nature", label: "景観", icon: Mountain },
+  { value: "animal", label: "生物", icon: Leaf },
 ] as const;
 
 export function SubmitForm() {
@@ -45,12 +46,14 @@ export function SubmitForm() {
   const [capturedImage, setCapturedImage] = useState<CapturedImage | null>(
     null,
   );
-  const [category, setCategory] = useState<string>(""); // カテゴリ選択
+  const [category, setCategory] = useState<string>(""); // カテゴリ選択（ラジオボタン）
   const [agreed, setAgreed] = useState(false);
   const [address, setAddress] = useState("");
-  const formRef = useRef<HTMLFormElement>(null);
+  const formRef = useRef<HTMLFormElement>(null); //form(DOM要素)のref(参照)を取得⇒form.currentに実際のformのDOM要素が入る
 
   // useActionStateでServer Actionの状態を管理
+  //formActionが発火するとブラウザがformDataを生成してuseActionStateに渡す(そのformDataにappendで値を使いしてSubmitPostに渡す)
+  //name 属性を持つフォーム要素の value を集めて👉 FormData を生成する
   const [, formAction, isPending] = useActionState<
     SubmitPostResult | null,
     FormData
@@ -96,7 +99,7 @@ export function SubmitForm() {
       if (result.success) {
         toast.success(result.message);
         // フォームリセット
-        formRef.current?.reset();
+        formRef.current?.reset(); //<form>要素内にあるname属性が付与されたinput要素（input,select,textarea）をリセット
         setCapturedImage(null);
         setCategory("");
         setAgreed(false);
@@ -114,6 +117,7 @@ export function SubmitForm() {
     }
   }, null);
 
+  //RadiogGroupnにおいて、最終的にサーバーに送られるのはoption.value
   return (
     <form ref={formRef} action={formAction} className="space-y-8">
       {/* カテゴリ選択（ラジオボタン） */}
