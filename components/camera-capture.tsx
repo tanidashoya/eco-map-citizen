@@ -6,7 +6,7 @@
 // 撮影完了後に位置情報を取得し、画像と位置情報を親に返す
 
 import { useRef, useState } from "react";
-import { Camera, X, MapPin, Loader2, CheckCircle, ImageIcon } from "lucide-react";
+import { Camera, MapPin, Loader2, CheckCircle, ImageIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CameraCaptureProps, CapturedImage, GeoLocation } from "@/types/form";
@@ -35,6 +35,8 @@ export function CameraCapture({
 }: CameraCaptureProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  // 位置情報を一時的に保持（撮影前に取得、撮影後に使用）
+  const pendingLocationRef = useRef<GeoLocation | null>(null);
 
   // 位置情報を取得する関数
   const getLocation = (): Promise<GeoLocation | null> => {
@@ -79,13 +81,17 @@ export function CameraCapture({
   };
 
   // 撮影ボタン押下時のハンドラ
-  const handleCaptureClick = () => {
-    // カメラをすぐに起動（位置情報は撮影直後に取得）
+  const handleCaptureClick = async () => {
+    // 位置情報を先に取得（カメラ起動前に完了させる）
+    const location = await getLocation();
+    pendingLocationRef.current = location;
+
+    // 位置情報取得完了後にカメラを起動
     fileInputRef.current?.click();
   };
 
   // ファイル選択（撮影完了）時のハンドラ
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -95,8 +101,8 @@ export function CameraCapture({
       return;
     }
 
-    // 撮影直後に位置情報を取得（撮影場所をより正確に記録）
-    const location = await getLocation();
+    // 撮影前に取得した位置情報を使用
+    const location = pendingLocationRef.current;
 
     // 位置情報が取得できなかった場合は警告
     if (!location) {
@@ -115,6 +121,7 @@ export function CameraCapture({
 
     // 同じファイルを再選択できるようリセット
     e.target.value = "";
+    pendingLocationRef.current = null;
   };
 
   // 削除ボタンのハンドラ
