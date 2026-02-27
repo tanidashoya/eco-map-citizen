@@ -1,13 +1,12 @@
 import sharp from "sharp";
 
-// 画像圧縮設定
-const MAX_IMAGE_WIDTH = 1920;
-const MAX_IMAGE_HEIGHT = 1080;
+// 画像圧縮設定（リサイズなし、品質のみ調整）
 const JPEG_QUALITY = 80;
 
 /**
- * 画像を圧縮・リサイズする（サーバーサイド）
+ * 画像を圧縮する（サーバーサイド）
  * sharpライブラリを使用した一般的で確実な方法
+ * リサイズは行わず、JPEG品質のみで圧縮（アスペクト比・サイズは維持）
  *
  * @param buffer - 元画像のBuffer
  * @param mimeType - 元画像のMIMEタイプ（未使用、常にJPEG出力）
@@ -20,10 +19,6 @@ export async function compressImage(
   const originalSize = buffer.length;
 
   const compressedBuffer = await sharp(buffer)
-    .resize(MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT, {
-      fit: "inside", // アスペクト比を維持して収まるようにリサイズ
-      withoutEnlargement: true, // 元画像より大きくしない
-    })
     .jpeg({
       quality: JPEG_QUALITY,
       mozjpeg: true, // より効率的な圧縮
