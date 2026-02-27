@@ -3,7 +3,7 @@
 // components/camera-capture.tsx
 //
 // 役割: カメラで撮影 + Geolocation APIで現在地を取得
-// 撮影ボタン押下時に位置情報取得を開始し、撮影完了後に画像と位置情報を親に返す
+// 撮影完了後に位置情報を取得し、画像と位置情報を親に返す
 
 import { useRef, useState } from "react";
 import { Camera, X, MapPin, Loader2, CheckCircle, ImageIcon } from "lucide-react";
@@ -23,62 +23,6 @@ const GEO_OPTIONS: PositionOptions = {
   timeout: 10000, // 10秒でタイムアウト
   maximumAge: 0, // キャッシュを使わず常に最新の位置を取得
 };
-// サムネイル設定（メモリ節約のため小さく）
-const THUMBNAIL_MAX_SIZE = 300;
-
-// ----------------------------------------------------------------
-// ユーティリティ関数
-// ----------------------------------------------------------------
-
-/**
- * プレビュー用の小さいサムネイルを作成（メモリ節約）
- * 失敗した場合はnullを返す
- */
-async function createThumbnail(file: File): Promise<string | null> {
-  try {
-    // Blob URLを作成
-    const url = URL.createObjectURL(file);
-
-    // Imageを使って読み込み（createImageBitmapより互換性が高い）
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = reject;
-      image.src = url;
-    });
-
-    // 元のBlob URLを解放
-    URL.revokeObjectURL(url);
-
-    // サムネイルサイズを計算
-    let { width, height } = img;
-    const scale = Math.min(THUMBNAIL_MAX_SIZE / width, THUMBNAIL_MAX_SIZE / height, 1);
-    width = Math.round(width * scale);
-    height = Math.round(height * scale);
-
-    // 小さいCanvasに描画
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      return null;
-    }
-    ctx.drawImage(img, 0, 0, width, height);
-
-    // Data URLを取得（小さいのでBase64でOK）
-    const thumbnailUrl = canvas.toDataURL("image/jpeg", 0.6);
-
-    // Canvasのメモリを解放
-    canvas.width = 0;
-    canvas.height = 0;
-
-    return thumbnailUrl;
-  } catch (error) {
-    console.warn("サムネイル作成に失敗:", error);
-    return null;
-  }
-}
 
 // ----------------------------------------------------------------
 // コンポーネント
@@ -151,11 +95,6 @@ export function CameraCapture({
       return;
     }
 
-    // 既存プレビューのメモリを解放
-    if (capturedImage) {
-      URL.revokeObjectURL(capturedImage.previewUrl);
-    }
-
     // 撮影直後に位置情報を取得（撮影場所をより正確に記録）
     const location = await getLocation();
 
@@ -164,18 +103,13 @@ export function CameraCapture({
       toast.warning("位置情報を取得できませんでした。再度撮影してください。");
     }
 
-    // プレビュー用の小さいサムネイルを作成（メモリ節約）
-    // サムネイル作成に失敗した場合はBlob URLを使用（メモリ消費のリスクあり）
-    const thumbnailUrl = await createThumbnail(file);
-    const previewUrl = thumbnailUrl ?? URL.createObjectURL(file);
-
     // 親コンポーネントにデータを返す
-    // 画像圧縮はサーバー側（sharp）で行うため、クライアントでは元のファイルを使用
+    // プレビュー画像なし（メモリ節約）、画像圧縮はサーバー側（sharp）で実行
     const capturedData: CapturedImage = {
-      previewUrl,
+      previewUrl: "", // プレビューなし
       file,
       location,
-      capturedAt: new Date().toISOString(), // 撮影時刻を記録
+      capturedAt: new Date().toISOString(),
     };
     onCapture(capturedData);
 
@@ -185,9 +119,6 @@ export function CameraCapture({
 
   // 削除ボタンのハンドラ
   const handleRemove = () => {
-    if (capturedImage) {
-      URL.revokeObjectURL(capturedImage.previewUrl);
-    }
     onCapture(null);
   };
 
@@ -198,43 +129,56 @@ export function CameraCapture({
       </Label>
 
       {capturedImage ? (
-        /* 撮影後のプレビュー表示 */
-        <div className="relative w-full overflow-hidden rounded-xl">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={capturedImage.previewUrl}
-            alt="撮影した写真"
-            className="aspect-video w-full object-cover"
-          />
-
-          {/* 位置情報表示バッジ */}
-          {capturedImage.location && (
-            <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-green-500/90 px-2 py-1 text-xs text-white">
-              <MapPin className="size-3" />
-              <span>位置情報取得済み</span>
+        /* 撮影後の確認表示（プレビューなし） */
+        <div className="relative w-full overflow-hidden rounded-xl border-2 border-green-500 bg-green-50">
+          <div className="flex flex-col items-center justify-center gap-3 py-8">
+            {/* 撮影完了アイコン */}
+            <div className="flex items-center gap-2 text-green-600">
+              <CheckCircle className="size-8" />
+              <span className="text-lg font-medium">撮影完了</span>
             </div>
-          )}
 
-          {/* 削除ボタン */}
-          <button
-            type="button"
-            onClick={handleRemove}
-            disabled={disabled}
-            aria-label="写真を削除"
-            className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:bg-black/80"
-          >
-            <X className="size-4" />
-          </button>
+            {/* ファイル情報 */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <ImageIcon className="size-4" />
+              <span>
+                {(capturedImage.file.size / 1024 / 1024).toFixed(1)}MB
+              </span>
+            </div>
 
-          {/* 撮り直しボタン */}
-          <button
-            type="button"
-            onClick={handleCaptureClick}
-            disabled={disabled || isGettingLocation}
-            className="absolute bottom-2 right-2 rounded-full bg-black/60 px-3 py-1 text-xs text-white hover:bg-black/80"
-          >
-            撮り直す
-          </button>
+            {/* 位置情報表示 */}
+            {capturedImage.location ? (
+              <div className="flex items-center gap-1 rounded-full bg-green-500 px-3 py-1 text-xs text-white">
+                <MapPin className="size-3" />
+                <span>位置情報取得済み</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 rounded-full bg-red-500 px-3 py-1 text-xs text-white">
+                <MapPin className="size-3" />
+                <span>位置情報なし</span>
+              </div>
+            )}
+
+            {/* ボタン群 */}
+            <div className="mt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={handleCaptureClick}
+                disabled={disabled || isGettingLocation}
+                className="rounded-full bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300"
+              >
+                撮り直す
+              </button>
+              <button
+                type="button"
+                onClick={handleRemove}
+                disabled={disabled}
+                className="rounded-full bg-red-100 px-4 py-2 text-sm text-red-600 hover:bg-red-200"
+              >
+                削除
+              </button>
+            </div>
+          </div>
         </div>
       ) : (
         /* 初期状態：撮影ボタン */
