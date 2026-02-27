@@ -4,10 +4,6 @@ import {
   appendSheetData,
   uploadImageToDrive,
 } from "@/lib/google-api/google-api";
-import {
-  compressImage,
-  getCompressedMimeType,
-} from "@/lib/image/compress-image";
 
 export type SubmitPostResult =
   | { success: true; message: string }
@@ -46,16 +42,11 @@ export async function submitPost(
       return { success: false, message: "位置情報が必要です" };
     }
 
-    // 画像を圧縮してGoogle Driveにアップロード
-    const originalBuffer = Buffer.from(await image.arrayBuffer());
-    const compressedBuffer = await compressImage(originalBuffer, image.type);
+    // 元の画像をそのままGoogle Driveにアップロード（縦横比を維持）
+    const buffer = Buffer.from(await image.arrayBuffer());
     const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID!;
-    const mimeType = getCompressedMimeType(); // 常にJPEG
-    const imageUrl = await uploadImageToDrive(
-      compressedBuffer,
-      folderId,
-      mimeType,
-    );
+    const mimeType = image.type || "image/jpeg";
+    const imageUrl = await uploadImageToDrive(buffer, folderId, mimeType);
     console.log("imageUrl", imageUrl);
 
     // スプレッドシートに追記するデータ
