@@ -10,7 +10,7 @@ export default function Home() {
   const [logMessages, setLogMessages] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const handleDataFormmatLocate = async () => {
-    setLogMessages("詳細情報を取得しています...");
+    setLogMessages("マップに反映しています...");
     setIsLoading(true);
     const result = await ActionDataFormmatLocate();
     if (result?.success) {
@@ -44,16 +44,12 @@ export default function Home() {
         <div className="flex flex-col items-center justify-center gap-2">
           <CustomButton
             icon={<Locate className="size-5" />}
-            text="詳細情報を取得"
+            text="マップに反映"
             className="w-[200px] h-[50px] lg:w-[220px] lg:h-[55px] bg-green-500 text-white shadow-md hover:bg-green-600 transition-all duration-300 cursor-pointer"
             onClick={handleDataFormmatLocate}
           />
           <span className="text-sm font-medium text-center text-gray-400">
-            ※画像から緯度・経度・撮影日時取得
-            <br />
-            <span className="text-sm font-medium text-center text-gray-400">
-              ※環境マップに反映します
-            </span>
+            ※マップに反映させる前にドライブに保存した画像の確認をしてください。
           </span>
         </div>
         {/* <div>

@@ -28,7 +28,7 @@ export async function ActionDataFormmatLocate() {
 
   return {
     success: true,
-    message: "データのフォーマットが完了しました",
+    message: "マップへの反映が完了しました",
     processedCount: imageLocation.processedCount,
   };
 }
