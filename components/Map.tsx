@@ -101,9 +101,10 @@ export default function Map({
         currentLocation={currentLocation}
         isLocationLoading={isLocationLoading}
         mapTypePic={mapTypePic}
+        handleMapType={handleMapType}
       />
       <Header />
-      <MapTypeButton handleMapType={handleMapType} mapTypePic={mapTypePic} />
+
       <LocationSheet selectedPoint={selectedPoint as MergedPoint} />
       <LocationDetailSheet
         item={selectedPoint?.items[0] ?? null}

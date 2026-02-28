@@ -3,6 +3,7 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import CurrentLocationMarker from "./current-location-marker";
 import LocateButton from "./locate-button";
 import Attribution from "./attribution";
+import MapTypeButton from "./map-type-button";
 
 interface MapLeafletProps {
   initialCenter: [number, number];
@@ -10,6 +11,7 @@ interface MapLeafletProps {
   isLocationLoading: boolean;
   markers: React.ReactNode;
   mapTypePic: boolean;
+  handleMapType: () => void;
 }
 
 export default function MapLeaflet({
@@ -18,6 +20,7 @@ export default function MapLeaflet({
   currentLocation,
   isLocationLoading,
   mapTypePic,
+  handleMapType,
 }: MapLeafletProps) {
   const mapAttribution = process.env.NEXT_PUBLIC_MAP_ATTRIBUTION;
   const mapUrl = process.env.NEXT_PUBLIC_MAP_URL;
@@ -53,7 +56,7 @@ export default function MapLeaflet({
         coords={currentLocation}
         isLocationLoading={isLocationLoading}
       />
-
+      <MapTypeButton handleMapType={handleMapType} mapTypePic={mapTypePic} />
       <Attribution mapTypePic={mapTypePic} />
     </MapContainer>
   );
