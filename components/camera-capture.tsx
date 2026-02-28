@@ -289,9 +289,9 @@ export function CameraCapture({
       )}
       {/* 注意書きを追加 */}
       <p className="text-xs text-muted-foreground text-left ml-1 mt-2">
-        ※ 撮影がうまくいかない場合は、
+        撮影がうまくいかない場合は、
         <br />
-        ブラウザのタブを閉じるか端末を再起動してください
+        他のアプリやブラウザのタブを閉じてから再度お試しください。
       </p>
       {/* 非表示のファイルインプット（カメラ起動用） */}
       {/* capture="environment" で背面カメラを起動 */}
