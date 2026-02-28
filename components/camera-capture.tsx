@@ -6,7 +6,7 @@
 // 撮影完了後に位置情報を取得し、画像と位置情報を親に返す
 
 import { useRef, useState } from "react";
-import { Camera, MapPin, Loader2, CheckCircle, ImageIcon } from "lucide-react";
+import { Camera, MapPin, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CameraCaptureProps, CapturedImage, GeoLocation } from "@/types/form";
@@ -147,6 +147,10 @@ export function CameraCapture({
 
   // 撮影ボタン押下時のハンドラ
   const handleCaptureClick = async () => {
+    // 撮り直しの場合は古いプレビューURLを解放
+    if (capturedImage?.previewUrl) {
+      URL.revokeObjectURL(capturedImage.previewUrl);
+    }
     // 位置情報を先に取得してからカメラを起動
     const location = await getLocation();
     pendingLocationRef.current = location;
@@ -186,9 +190,12 @@ export function CameraCapture({
       return;
     }
 
+    // 圧縮後のファイルからプレビューURLを作成
+    const previewUrl = URL.createObjectURL(compressedFile);
+
     // 親コンポーネントにデータを返す
     const capturedData: CapturedImage = {
-      previewUrl: "",
+      previewUrl,
       file: compressedFile, // ← 圧縮後のファイル
       location,
       capturedAt: new Date().toISOString(),
@@ -202,6 +209,10 @@ export function CameraCapture({
 
   // 削除ボタンのハンドラ
   const handleRemove = () => {
+    // プレビューURLを解放してメモリリーク防止
+    if (capturedImage?.previewUrl) {
+      URL.revokeObjectURL(capturedImage.previewUrl);
+    }
     onCapture(null);
   };
 
@@ -212,55 +223,50 @@ export function CameraCapture({
       </Label>
 
       {capturedImage ? (
-        /* 撮影後の確認表示（プレビューなし） */
-        <div className="relative w-full overflow-hidden rounded-xl border-2 border-green-500 bg-green-50">
-          <div className="flex flex-col items-center justify-center gap-3 py-8">
-            {/* 撮影完了アイコン */}
-            <div className="flex items-center gap-2 text-green-600">
-              <CheckCircle className="size-8" />
-              <span className="text-lg font-medium">撮影完了</span>
+        /* 撮影後の確認表示（プレビューあり） */
+        <div className="relative w-full overflow-hidden rounded-xl border-2 border-green-500">
+          {/* プレビュー画像 */}
+          <div className="relative aspect-[4/3] w-full bg-black">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={capturedImage.previewUrl}
+              alt="撮影した写真"
+              className="size-full object-contain"
+            />
+            {/* 位置情報バッジ（画像上にオーバーレイ） */}
+            <div className="absolute bottom-2 left-2">
+              {capturedImage.location ? (
+                <div className="flex items-center gap-1 rounded-full bg-green-500 px-3 py-1 text-xs text-white shadow-md">
+                  <MapPin className="size-3" />
+                  <span>位置情報取得済み</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 rounded-full bg-red-500 px-3 py-1 text-xs text-white shadow-md">
+                  <MapPin className="size-3" />
+                  <span>位置情報なし</span>
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* ファイル情報 */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <ImageIcon className="size-4" />
-              <span>
-                {(capturedImage.file.size / 1024 / 1024).toFixed(1)}MB
-              </span>
-            </div>
-
-            {/* 位置情報表示 */}
-            {capturedImage.location ? (
-              <div className="flex items-center gap-1 rounded-full bg-green-500 px-3 py-1 text-xs text-white">
-                <MapPin className="size-3" />
-                <span>位置情報取得済み</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 rounded-full bg-red-500 px-3 py-1 text-xs text-white">
-                <MapPin className="size-3" />
-                <span>位置情報なし</span>
-              </div>
-            )}
-
-            {/* ボタン群 */}
-            <div className="mt-2 flex gap-3">
-              <button
-                type="button"
-                onClick={handleCaptureClick}
-                disabled={disabled || isGettingLocation}
-                className="rounded-full bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300"
-              >
-                撮り直す
-              </button>
-              <button
-                type="button"
-                onClick={handleRemove}
-                disabled={disabled}
-                className="rounded-full bg-red-100 px-4 py-2 text-sm text-red-600 hover:bg-red-200"
-              >
-                削除
-              </button>
-            </div>
+          {/* ボタン群 */}
+          <div className="flex justify-center gap-3 bg-green-50 py-3">
+            <button
+              type="button"
+              onClick={handleCaptureClick}
+              disabled={disabled || isGettingLocation}
+              className="rounded-full bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300"
+            >
+              撮り直す
+            </button>
+            <button
+              type="button"
+              onClick={handleRemove}
+              disabled={disabled}
+              className="rounded-full bg-red-100 px-4 py-2 text-sm text-red-600 hover:bg-red-200"
+            >
+              削除
+            </button>
           </div>
         </div>
       ) : (
