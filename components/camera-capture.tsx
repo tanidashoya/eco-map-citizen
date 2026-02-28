@@ -38,6 +38,71 @@ export function CameraCapture({
   // 位置情報を一時的に保持（撮影前に取得、撮影後に使用）
   const pendingLocationRef = useRef<GeoLocation | null>(null);
 
+  // ----------------------------------------------------------------
+  // 画像圧縮（Canvas API）
+  // ----------------------------------------------------------------
+
+  const MAX_WIDTH = 1920; // 最大幅
+  const MAX_HEIGHT = 1920; // 最大高さ
+  const JPEG_QUALITY = 0.8; // 圧縮品質（0.0〜1.0）
+
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        // 元画像のURL解放
+        URL.revokeObjectURL(url);
+
+        // リサイズ計算
+        let { width, height } = img;
+        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+          const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        // Canvas作成・描画
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Canvas context取得失敗"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Blob化
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("圧縮に失敗しました"));
+              return;
+            }
+            // BlobをFileに変換
+            const compressedFile = new File(
+              [blob],
+              file.name.replace(/\.[^.]+$/, ".jpg"),
+              { type: "image/jpeg" },
+            );
+            resolve(compressedFile);
+          },
+          "image/jpeg",
+          JPEG_QUALITY,
+        );
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("画像の読み込みに失敗しました"));
+      };
+
+      img.src = url;
+    });
+  };
+
   // 位置情報を取得する関数
   const getLocation = (): Promise<GeoLocation | null> => {
     return new Promise((resolve) => {
@@ -89,11 +154,12 @@ export function CameraCapture({
   };
 
   // ファイル選択（撮影完了）時のハンドラ
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ファイル選択（撮影完了）時のハンドラ
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // ファイルサイズチェック
+    // ファイルサイズチェック（圧縮前）
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
       toast.error(`ファイルサイズは ${MAX_FILE_SIZE_MB}MB 以内にしてください`);
       return;
@@ -107,17 +173,29 @@ export function CameraCapture({
       toast.warning("位置情報を取得できませんでした。再度撮影してください。");
     }
 
+    // 画像を圧縮
+    let compressedFile: File;
+    try {
+      compressedFile = await compressImage(file);
+      console.log(
+        `圧縮: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(1)}MB`,
+      );
+    } catch (error) {
+      console.error("圧縮エラー:", error);
+      toast.error("画像の圧縮に失敗しました");
+      return;
+    }
+
     // 親コンポーネントにデータを返す
-    // プレビュー画像なし（メモリ節約）、画像圧縮はサーバー側（sharp）で実行
     const capturedData: CapturedImage = {
-      previewUrl: "", // プレビューなし
-      file,
+      previewUrl: "",
+      file: compressedFile, // ← 圧縮後のファイル
       location,
       capturedAt: new Date().toISOString(),
     };
     onCapture(capturedData);
 
-    // 同じファイルを再選択できるようリセット
+    // リセット
     e.target.value = "";
     pendingLocationRef.current = null;
   };
