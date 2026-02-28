@@ -5,13 +5,21 @@
 // 役割: カメラで撮影 + Geolocation APIで現在地を取得
 // 撮影完了後に位置情報を取得し、画像と位置情報を親に返す
 
-import { useRef, useState } from "react";
-import { Camera, MapPin, Loader2, CheckCircle, ImageIcon } from "lucide-react";
+import { useRef, useState, useSyncExternalStore } from "react";
+import {
+  Camera,
+  MapPin,
+  Loader2,
+  CheckCircle,
+  ImageIcon,
+  AlertTriangle,
+} from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CameraCaptureProps, CapturedImage, GeoLocation } from "@/types/form";
 import { compressImageLib } from "@/lib/form/compress-image-lib";
 import { getLocationLib } from "@/lib/form/get-location-lib";
+import { isInAppBrowser } from "@/lib/form/detect-in-app-browser";
 
 // ----------------------------------------------------------------
 // 定数
@@ -19,6 +27,9 @@ import { getLocationLib } from "@/lib/form/get-location-lib";
 
 const MAX_FILE_SIZE_MB = 15;
 const ACCEPTED_TYPES = "image/*";
+const emptySubscribe = () => () => {};
+const getInAppSnapshot = () => isInAppBrowser();
+const getInAppServerSnapshot = () => false;
 
 // ----------------------------------------------------------------
 // コンポーネント
@@ -35,6 +46,12 @@ export function CameraCapture({
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   // 位置情報を一時的に保持（撮影前に取得、撮影後に使用）
   const pendingLocationRef = useRef<GeoLocation | null>(null);
+  // アプリ内ブラウザ検出（SSR安全: サーバーではfalse、クライアントで実際の値を返す）
+  const isInApp = useSyncExternalStore(
+    emptySubscribe,
+    getInAppSnapshot,
+    getInAppServerSnapshot,
+  );
 
   // ----------------------------------------------------------------
   // 画像圧縮（Canvas API）
@@ -115,6 +132,21 @@ export function CameraCapture({
       <Label className="text-base font-medium">
         写真 <span className="text-destructive">*</span>
       </Label>
+
+      {/* アプリ内ブラウザ警告 */}
+      {isInApp && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          <div>
+            <p className="font-medium">カメラが起動しない場合があります</p>
+            <p className="mt-1 text-xs leading-relaxed">
+              右上の「︙」メニューから
+              <span className="font-medium">「ブラウザで開く」</span>
+              を選択してください。
+            </p>
+          </div>
+        </div>
+      )}
 
       {capturedImage ? (
         /* 撮影後の確認表示（プレビューなし） */

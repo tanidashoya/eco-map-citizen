@@ -21,6 +21,7 @@ export const compressImageLib = async (file: File): Promise<File> => {
  * - .close()で即座にメモリ解放可能
  */
 const compressWithBitmap = async (file: File): Promise<File> => {
+  //JPEG⇒ピクセル配列への変換（デコード）
   const bitmap = await createImageBitmap(file);
 
   try {
