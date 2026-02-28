@@ -140,7 +140,7 @@ export function CameraCapture({
           <div>
             <p className="font-medium">カメラが起動しない場合があります</p>
             <p className="mt-1 text-xs leading-relaxed">
-              右上の「︙」メニューから
+              「︙」メニューから
               <span className="font-medium">「ブラウザで開く」</span>
               を選択してください。
             </p>
