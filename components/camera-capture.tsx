@@ -10,6 +10,8 @@ import { Camera, MapPin, Loader2, CheckCircle, ImageIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CameraCaptureProps, CapturedImage, GeoLocation } from "@/types/form";
+import { compressImageLib } from "@/lib/form/compress-image-lib";
+import { getLocationLib } from "@/lib/form/get-location-lib";
 
 // ----------------------------------------------------------------
 // 定数
@@ -17,12 +19,6 @@ import { CameraCaptureProps, CapturedImage, GeoLocation } from "@/types/form";
 
 const MAX_FILE_SIZE_MB = 15;
 const ACCEPTED_TYPES = "image/*";
-// Geolocation APIのオプション
-const GEO_OPTIONS: PositionOptions = {
-  enableHighAccuracy: true, // 高精度モード（GPS優先）
-  timeout: 10000, // 10秒でタイムアウト
-  maximumAge: 0, // キャッシュを使わず常に最新の位置を取得
-};
 
 // ----------------------------------------------------------------
 // コンポーネント
@@ -33,7 +29,9 @@ export function CameraCapture({
   disabled = false,
   onCapture,
 }: CameraCaptureProps) {
+  // カメラ撮影用のファイルインプット要素のrefを取得
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // 位置情報取得中のフラグ
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   // 位置情報を一時的に保持（撮影前に取得、撮影後に使用）
   const pendingLocationRef = useRef<GeoLocation | null>(null);
@@ -42,107 +40,14 @@ export function CameraCapture({
   // 画像圧縮（Canvas API）
   // ----------------------------------------------------------------
 
-  const MAX_WIDTH = 1280; // 最大幅
-  const MAX_HEIGHT = 1280; // 最大高さ
-  const JPEG_QUALITY = 0.8; // 圧縮品質（0.0〜1.0）
-
-  const compressImage = (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-
-      img.onload = () => {
-        // 元画像のURL解放
-        URL.revokeObjectURL(url);
-
-        // リサイズ計算
-        let { width, height } = img;
-        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
-          const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
-          width = Math.round(width * ratio);
-          height = Math.round(height * ratio);
-        }
-
-        // Canvas作成・描画
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Canvas context取得失敗"));
-          return;
-        }
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Blob化
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error("圧縮に失敗しました"));
-              return;
-            }
-            // BlobをFileに変換
-            const compressedFile = new File(
-              [blob],
-              file.name.replace(/\.[^.]+$/, ".jpg"),
-              { type: "image/jpeg" },
-            );
-            resolve(compressedFile);
-          },
-          "image/jpeg",
-          JPEG_QUALITY,
-        );
-      };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error("画像の読み込みに失敗しました"));
-      };
-
-      img.src = url;
-    });
+  //非同期関数にしてcompressImageLib が resolve されるまでそこで一時停止する
+  const compressImage = async (file: File): Promise<File> => {
+    return await compressImageLib(file);
   };
 
-  // 位置情報を取得する関数
-  const getLocation = (): Promise<GeoLocation | null> => {
-    return new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        toast.error("お使いのブラウザは位置情報に対応していません");
-        resolve(null);
-        return;
-      }
-
-      setIsGettingLocation(true);
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const location: GeoLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          setIsGettingLocation(false);
-          resolve(location);
-        },
-        (error) => {
-          setIsGettingLocation(false);
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              toast.error(
-                "位置情報の許可が必要です。設定から許可してください。",
-              );
-              break;
-            case error.POSITION_UNAVAILABLE:
-              toast.error("位置情報を取得できませんでした");
-              break;
-            case error.TIMEOUT:
-              toast.error("位置情報の取得がタイムアウトしました");
-              break;
-          }
-          resolve(null);
-        },
-        GEO_OPTIONS,
-      );
-    });
+  //非同期関数にしてgetLocationLib が resolve されるまでそこで一時停止する
+  const getLocation = async (): Promise<GeoLocation | null> => {
+    return await getLocationLib(setIsGettingLocation);
   };
 
   // 撮影ボタン押下時のハンドラ
