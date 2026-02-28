@@ -52,11 +52,15 @@ export default function MapLeaflet({
       {markers}
       <CurrentLocationMarker coords={currentLocation} />
 
-      <LocateButton
-        coords={currentLocation}
-        isLocationLoading={isLocationLoading}
-      />
-      <MapTypeButton handleMapType={handleMapType} mapTypePic={mapTypePic} />
+      {/* 右下ボタン群 - flexboxで縦に並べて右端揃え */}
+      <div className="absolute bottom-14 right-4 z-999 flex flex-col items-end gap-2 lg:bottom-8 lg:right-6">
+        <MapTypeButton handleMapType={handleMapType} mapTypePic={mapTypePic} />
+        <LocateButton
+          coords={currentLocation}
+          isLocationLoading={isLocationLoading}
+        />
+      </div>
+
       <Attribution mapTypePic={mapTypePic} />
     </MapContainer>
   );

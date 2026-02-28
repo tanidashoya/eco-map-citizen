@@ -10,9 +10,8 @@ export default function MapTypeButton({
 }) {
   return (
     <Button
-      // size="icon-lg"
       onClick={handleMapType}
-      className="absolute lg:bottom-20 bottom-12 right-4 lg:right-6 z-999 bg-white text-black border-blue-500 border-2 rounded-md cursor-pointer text-sm hover:bg-gray-200 shadow-md"
+      className="bg-white text-black border-blue-500 border-2 rounded-md cursor-pointer text-sm hover:bg-gray-200 shadow-md"
     >
       {mapTypePic ? (
         <>

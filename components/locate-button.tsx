@@ -32,24 +32,22 @@ export default function LocateButton({
   };
 
   return (
-    <div className="absolute z-999 bottom-14 lg:bottom-8 right-4 lg:right-6">
-      <Button
-        onClick={handleLocate}
-        disabled={isLocationLoading}
-        className="flex w-24 items-center gap-2 px-4 py-5 justify-center bg-blue-500 shadow-md text-white hover:bg-blue-600 cursor-pointer disabled:opacity-50"
-      >
-        {isLocationLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>取得中</span>
-          </>
-        ) : (
-          <>
-            <Locate className="w-4 h-4" />
-            <span>現在地</span>
-          </>
-        )}
-      </Button>
-    </div>
+    <Button
+      onClick={handleLocate}
+      disabled={isLocationLoading}
+      className="flex w-24 items-center gap-2 px-4 py-5 justify-center bg-blue-500 shadow-md text-white hover:bg-blue-600 cursor-pointer disabled:opacity-50"
+    >
+      {isLocationLoading ? (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>取得中</span>
+        </>
+      ) : (
+        <>
+          <Locate className="w-4 h-4" />
+          <span>現在地</span>
+        </>
+      )}
+    </Button>
   );
 }

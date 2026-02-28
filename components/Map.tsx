@@ -7,10 +7,8 @@ import Header from "./header";
 import LocationSheet from "./location-sheet";
 import { useRouter } from "next/navigation";
 import LocationDetailSheet from "./location-detail-sheet";
-import MapTypeButton from "./map-type-button";
 import createCustomIcon from "@/lib/map/create-custom-icon";
 import { useState, useMemo, useCallback } from "react";
-import Attribution from "./attribution";
 import MapLeaflet from "./map-leaflet";
 
 // Next.js環境でのアイコン修正
