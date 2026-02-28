@@ -80,9 +80,10 @@ export async function submitPost(
     return { success: true, message: "投稿が完了しました！" };
   } catch (error) {
     console.error("投稿処理エラー:", error);
+    const errorMessage = error instanceof Error ? error.message : "不明なエラー";
     return {
       success: false,
-      message: "送信に失敗しました。もう一度お試しください。",
+      message: `送信に失敗しました: ${errorMessage}`,
     };
   }
 }
