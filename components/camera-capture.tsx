@@ -288,8 +288,8 @@ export function CameraCapture({
         </button>
       )}
       {/* 注意書きを追加 */}
-      <p className="text-xs text-red-400 text-left ml-1 mt-2">
-        撮影がうまくいかない場合は、
+      <p className="text-xs text-muted-foreground text-left ml-1 mt-2">
+        ※ 撮影がうまくいかない場合は、
         <br />
         ブラウザのタブを閉じるか端末を再起動してください
       </p>
