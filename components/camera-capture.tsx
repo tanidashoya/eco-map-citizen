@@ -15,7 +15,7 @@ import { CameraCaptureProps, CapturedImage, GeoLocation } from "@/types/form";
 // 定数
 // ----------------------------------------------------------------
 
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 15;
 const ACCEPTED_TYPES = "image/*";
 // Geolocation APIのオプション
 const GEO_OPTIONS: PositionOptions = {
@@ -42,8 +42,8 @@ export function CameraCapture({
   // 画像圧縮（Canvas API）
   // ----------------------------------------------------------------
 
-  const MAX_WIDTH = 1920; // 最大幅
-  const MAX_HEIGHT = 1920; // 最大高さ
+  const MAX_WIDTH = 1280; // 最大幅
+  const MAX_HEIGHT = 1280; // 最大高さ
   const JPEG_QUALITY = 0.8; // 圧縮品質（0.0〜1.0）
 
   const compressImage = (file: File): Promise<File> => {
@@ -287,7 +287,12 @@ export function CameraCapture({
           )}
         </button>
       )}
-
+      {/* 注意書きを追加 */}
+      <p className="text-xs text-red-400 text-left ml-1 mt-2">
+        撮影がうまくいかない場合は、
+        <br />
+        ブラウザのタブを閉じるか端末を再起動してください
+      </p>
       {/* 非表示のファイルインプット（カメラ起動用） */}
       {/* capture="environment" で背面カメラを起動 */}
       <input
