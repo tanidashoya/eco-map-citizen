@@ -114,7 +114,6 @@ export default function Map({
         }
         queryKey="point"
       />
-      <Attribution mapTypePic={mapTypePic} />
     </>
   );
 }

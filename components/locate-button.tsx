@@ -32,7 +32,7 @@ export default function LocateButton({
   };
 
   return (
-    <div className="absolute z-999 lg:bottom-8 bottom-20 right-6">
+    <div className="absolute z-999 bottom-14 lg:bottom-8 right-4 lg:right-6">
       <Button
         onClick={handleLocate}
         disabled={isLocationLoading}

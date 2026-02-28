@@ -2,6 +2,7 @@
 import { MapContainer, TileLayer } from "react-leaflet";
 import CurrentLocationMarker from "./current-location-marker";
 import LocateButton from "./locate-button";
+import Attribution from "./attribution";
 
 interface MapLeafletProps {
   initialCenter: [number, number];
@@ -52,6 +53,8 @@ export default function MapLeaflet({
         coords={currentLocation}
         isLocationLoading={isLocationLoading}
       />
+
+      <Attribution mapTypePic={mapTypePic} />
     </MapContainer>
   );
 }
