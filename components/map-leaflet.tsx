@@ -52,7 +52,7 @@ export default function MapLeaflet({
       {markers}
       <CurrentLocationMarker coords={currentLocation} />
 
-      {/* 右下ボタン群 - flexboxで縦に並べて右端揃え */}
+      {/* 右下ボタン群 - flexboxで縦に並べて右端揃えにした */}
       <div className="absolute bottom-14 right-4 z-999 flex flex-col items-end gap-2 lg:bottom-8 lg:right-6">
         <MapTypeButton handleMapType={handleMapType} mapTypePic={mapTypePic} />
         <LocateButton
