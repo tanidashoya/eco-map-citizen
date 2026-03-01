@@ -3,13 +3,13 @@
 // components/camera-capture.tsx
 //
 // 役割: カメラで撮影 + Geolocation APIで現在地を取得
-// 撮影完了後に位置情報を取得し、画像と位置情報を親に返す
+// watchPositionで位置を常に追跡し、撮影ボタン押下時は同期的にカメラを起動
+// （iOS Safariでは非同期処理後のinput.click()がブロックされるため）
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState, useEffect, useSyncExternalStore } from "react";
 import {
   Camera,
   MapPin,
-  Loader2,
   CheckCircle,
   ImageIcon,
   AlertTriangle,
@@ -18,8 +18,11 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CameraCaptureProps, CapturedImage, GeoLocation } from "@/types/form";
 import { compressImageLib } from "@/lib/form/compress-image-lib";
-import { getLocationLib } from "@/lib/form/get-location-lib";
 import { isInAppBrowser } from "@/lib/form/detect-in-app-browser";
+import {
+  LocationStatusBadge,
+  type LocationStatus,
+} from "@/components/location-status-badge";
 
 // ----------------------------------------------------------------
 // 定数
@@ -40,12 +43,23 @@ export function CameraCapture({
   disabled = false,
   onCapture,
 }: CameraCaptureProps) {
-  // カメラ撮影用のファイルインプット要素のrefを取得
+  // カメラ撮影用のファイルインプット要素のref
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // 位置情報取得中のフラグ
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
-  // 位置情報を一時的に保持（撮影前に取得、撮影後に使用）
-  const pendingLocationRef = useRef<GeoLocation | null>(null);
+
+  // watchPositionで追跡中の現在位置
+  const [currentLocation, setCurrentLocation] = useState<GeoLocation | null>(
+    null,
+  );
+  // 位置情報の取得状態（初期状態でGeolocation API対応を判定）
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>(() => {
+    // SSR時はnavigatorが存在しないため"loading"を返す
+    if (typeof window === "undefined") return "loading";
+    // Geolocation API非対応の場合は"error"
+    return navigator.geolocation ? "loading" : "error";
+  });
+  // watchPositionのID（クリーンアップ用）
+  const watchIdRef = useRef<number | null>(null);
+
   // アプリ内ブラウザ検出（SSR安全: サーバーではfalse、クライアントで実際の値を返す）
   const isInApp = useSyncExternalStore(
     emptySubscribe,
@@ -54,29 +68,84 @@ export function CameraCapture({
   );
 
   // ----------------------------------------------------------------
-  // 画像圧縮（Canvas API）
+  // 位置情報の継続的な追跡（watchPosition）
   // ----------------------------------------------------------------
+  useEffect(() => {
+    // Geolocation API非対応の場合は何もしない（初期状態で"error"になっている）
+    if (!navigator.geolocation) return;
 
-  //非同期関数にしてcompressImageLib が resolve されるまでそこで一時停止する
+    // 位置情報の追跡を開始
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      // 成功時
+      (position) => {
+        setCurrentLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setLocationStatus("ready");
+      },
+      // エラー時
+      (error) => {
+        console.error("位置情報エラー:", error.message);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationStatus("denied");
+        } else {
+          setLocationStatus("error");
+        }
+      },
+      // オプション
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000, // 5秒以内のキャッシュを使用
+        timeout: 10000, // 10秒でタイムアウト
+      },
+    );
+
+    // クリーンアップ: コンポーネントアンマウント時に追跡を停止
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
+
+  // ----------------------------------------------------------------
+  // 画像圧縮
+  // ----------------------------------------------------------------
   const compressImage = async (file: File): Promise<File> => {
     return await compressImageLib(file);
   };
 
-  //非同期関数にしてgetLocationLib が resolve されるまでそこで一時停止する
-  const getLocation = async (): Promise<GeoLocation | null> => {
-    return await getLocationLib(setIsGettingLocation);
-  };
+  // ----------------------------------------------------------------
+  // 撮影ボタン押下時のハンドラ（同期関数 - iOS対応のため重要）
+  // ----------------------------------------------------------------
+  const handleCaptureClick = () => {
+    // 位置情報の状態チェック
+    if (locationStatus === "denied") {
+      toast.error(
+        "位置情報の許可が必要です。ブラウザの設定から許可してください。",
+      );
+      return;
+    }
+    if (locationStatus === "loading") {
+      toast.info("位置情報を取得中です。しばらくお待ちください。");
+      return;
+    }
+    if (locationStatus === "error") {
+      toast.error(
+        "位置情報を取得できませんでした。ページを再読み込みしてください。",
+      );
+      return;
+    }
 
-  // 撮影ボタン押下時のハンドラ
-  const handleCaptureClick = async () => {
-    // 位置情報を先に取得してからカメラを起動
-    const location = await getLocation();
-    pendingLocationRef.current = location;
+    // 同期的にカメラを起動（これが重要！）
+    // iOS Safariでは非同期処理後のclick()がUser Gestureとして認識されないため
     fileInputRef.current?.click();
   };
 
+  // ----------------------------------------------------------------
   // ファイル選択（撮影完了）時のハンドラ
-  // ファイル選択（撮影完了）時のハンドラ
+  // ----------------------------------------------------------------
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -87,8 +156,8 @@ export function CameraCapture({
       return;
     }
 
-    // 撮影前に取得した位置情報を使用
-    const location = pendingLocationRef.current;
+    // watchPositionで追跡中の位置を使用（APIを呼ばない）
+    const location = currentLocation;
 
     // 位置情報が取得できなかった場合は警告
     if (!location) {
@@ -111,7 +180,7 @@ export function CameraCapture({
     // 親コンポーネントにデータを返す
     const capturedData: CapturedImage = {
       previewUrl: "",
-      file: compressedFile, // ← 圧縮後のファイル
+      file: compressedFile,
       location,
       capturedAt: new Date().toISOString(),
     };
@@ -119,13 +188,18 @@ export function CameraCapture({
 
     // リセット
     e.target.value = "";
-    pendingLocationRef.current = null;
   };
 
+  // ----------------------------------------------------------------
   // 削除ボタンのハンドラ
+  // ----------------------------------------------------------------
   const handleRemove = () => {
     onCapture(null);
   };
+
+  // ボタンを無効化する条件
+  const isButtonDisabled =
+    disabled || locationStatus === "loading" || locationStatus === "denied";
 
   return (
     <div className="space-y-2">
@@ -184,8 +258,8 @@ export function CameraCapture({
               <button
                 type="button"
                 onClick={handleCaptureClick}
-                disabled={disabled || isGettingLocation}
-                className="rounded-full bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300"
+                disabled={isButtonDisabled}
+                className="rounded-full bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300 disabled:opacity-50"
               >
                 撮り直す
               </button>
@@ -202,30 +276,27 @@ export function CameraCapture({
         </div>
       ) : (
         /* 初期状態：撮影ボタン */
-        <button
-          type="button"
-          onClick={handleCaptureClick}
-          disabled={disabled || isGettingLocation}
-          className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/30 py-10 text-muted-foreground transition-colors hover:bg-muted"
-        >
-          {isGettingLocation ? (
-            <>
-              <Loader2 className="size-8 animate-spin" />
-              <span className="text-sm">位置情報を取得中...</span>
-            </>
-          ) : (
-            <>
-              <Camera className="size-8" />
-              <span className="text-sm">タップして撮影する</span>
-              <span className="text-xs opacity-70">
-                撮影時に現在地も記録されます
-              </span>
-            </>
-          )}
-        </button>
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={handleCaptureClick}
+            disabled={isButtonDisabled}
+            className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/30 py-10 text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
+          >
+            <Camera className="size-8" />
+            <span className="text-sm">タップして撮影する</span>
+            <span className="text-xs opacity-70">
+              撮影時に現在地も記録されます
+            </span>
+          </button>
+          {/* 位置情報ステータス表示 */}
+          <div className="flex justify-center">
+            <LocationStatusBadge status={locationStatus} />
+          </div>
+        </div>
       )}
-      {/* 注意書きを追加 */}
-      <p className="text-xs text-muted-foreground text-left ml-1 mt-2">
+      {/* 注意書き */}
+      <p className="ml-1 mt-2 text-left text-xs text-muted-foreground">
         撮影がうまくいかない場合は、
         <br />
         他のアプリやブラウザのタブを閉じてから再度お試しください。
