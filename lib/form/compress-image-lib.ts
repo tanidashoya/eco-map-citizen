@@ -82,23 +82,26 @@ const compressWithImage = (file: File): Promise<File> => {
 
 // ----------------------------------------------------------------
 // Chrome向け：createImageBitmap方式
+// - デコード時にリサイズすることでメモリ効率を最大化
 // - bitmap.close()で即座にメモリ解放可能
-// - resizeオプションなしでアスペクト比を確実に維持
 // ----------------------------------------------------------------
 const compressWithBitmap = async (file: File): Promise<File> => {
   let bitmap: ImageBitmap | null = null;
   let canvas: HTMLCanvasElement | null = null;
 
   try {
-    // resizeオプションなしでデコード
-    // ※resizeWidth/resizeHeight両方指定するとアスペクト比が崩れる可能性があるため
-    bitmap = await createImageBitmap(file);
+    // resizeWidthのみ指定でアスペクト比を維持しながらデコード時にリサイズ
+    // ※両方指定するとアスペクト比が崩れる可能性があるため片方のみ
+    bitmap = await createImageBitmap(file, {
+      resizeWidth: MAX_WIDTH,
+      resizeQuality: "high",
+    });
 
-    // リサイズ計算（アスペクト比維持）
+    // 高さがMAX_HEIGHTを超える場合のみ追加リサイズ計算（縦長画像対応）
     let width = bitmap.width;
     let height = bitmap.height;
-    if (width > MAX_WIDTH || height > MAX_HEIGHT) {
-      const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+    if (height > MAX_HEIGHT) {
+      const ratio = MAX_HEIGHT / height;
       width = Math.round(width * ratio);
       height = Math.round(height * ratio);
     }
