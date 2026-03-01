@@ -122,6 +122,12 @@ export function CameraCapture({
   // 撮影ボタン押下時のハンドラ（同期関数 - iOS対応のため重要）
   // ----------------------------------------------------------------
   const handleCaptureClick = () => {
+    // 撮り直しの場合、先に既存画像への参照を解放（メモリ効率改善）
+    // これによりGCが古い画像を解放可能な状態になる
+    if (capturedImage) {
+      onCapture(null);
+    }
+
     // 位置情報の状態チェック
     if (locationStatus === "denied") {
       toast.error(
