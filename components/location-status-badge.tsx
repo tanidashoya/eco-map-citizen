@@ -2,14 +2,8 @@
 //
 // 役割: 位置情報の取得状態を表示するバッジコンポーネント
 
+import { LocationStatusBadgeProps } from "@/types/form/index";
 import { Loader2, MapPin, AlertTriangle } from "lucide-react";
-
-// 位置情報のステータス型
-export type LocationStatus = "loading" | "ready" | "denied" | "error";
-
-interface LocationStatusBadgeProps {
-  status: LocationStatus;
-}
 
 export function LocationStatusBadge({ status }: LocationStatusBadgeProps) {
   switch (status) {

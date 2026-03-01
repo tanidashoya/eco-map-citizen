@@ -47,3 +47,10 @@ export interface CameraCaptureProps {
   /** 画像・位置情報が変更されたときのコールバック */
   onCapture: (data: CapturedImage | null) => void;
 }
+
+// 位置情報のステータス型
+export type LocationStatus = "loading" | "ready" | "denied" | "error";
+
+export interface LocationStatusBadgeProps {
+  status: LocationStatus;
+}

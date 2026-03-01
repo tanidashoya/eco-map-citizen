@@ -16,13 +16,15 @@ import {
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CameraCaptureProps, CapturedImage, GeoLocation } from "@/types/form";
+import {
+  CameraCaptureProps,
+  CapturedImage,
+  GeoLocation,
+  LocationStatus,
+} from "@/types/form";
 import { compressImageLib } from "@/lib/form/compress-image-lib";
 import { isInAppBrowser } from "@/lib/form/detect-in-app-browser";
-import {
-  LocationStatusBadge,
-  type LocationStatus,
-} from "@/components/location-status-badge";
+import { LocationStatusBadge } from "@/components/location-status-badge";
 
 // ----------------------------------------------------------------
 // 定数
