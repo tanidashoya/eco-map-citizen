@@ -13,7 +13,7 @@ import {
   MAX_CLUSTER_RADIUS,
 } from "@/lib/map/constants";
 
-// マップ参照を外部に渡すコンポーネント
+// マップ参照を外部に渡すコンポーネントs
 function MapRefSetter({
   mapRef,
 }: {
@@ -117,7 +117,9 @@ export default function MapLeaflet({
               }
 
               // バッジの数字を抽出（バッジがない場合は1）
-              const countMatch = html.match(/<div[^>]*style="[^"]*position:absolute[^"]*top:-6px[^"]*"[^>]*>\s*(\d+)\s*<\/div>/);
+              const countMatch = html.match(
+                /<div[^>]*style="[^"]*position:absolute[^"]*top:-6px[^"]*"[^>]*>\s*(\d+)\s*<\/div>/,
+              );
               if (countMatch && countMatch[1]) {
                 totalItems += parseInt(countMatch[1], 10);
               } else {
