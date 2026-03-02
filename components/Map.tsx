@@ -29,6 +29,15 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png", //影の画像
 });
 
+// ズームしきい値 - この値以上のズームレベルではすぐにシートを開く
+// map-leaflet.tsxのmaxClusterRadius={10}と整合性を考慮
+// zoom 17以上ではほとんどのマーカーがクラスター化しない
+const IMMEDIATE_OPEN_ZOOM_THRESHOLD = 17;
+
+// flyToアニメーションの設定
+const FLY_TO_ZOOM = 19;
+const FLY_TO_DURATION = 1; // 秒
+
 export default function Map({
   mergedPoints,
   initialCenter,
@@ -44,23 +53,36 @@ export default function Map({
     setMapTypePic(!mapTypePic);
   };
 
-  // useCallbackでメモ化してuseMemoの依存配列が安定するようにする
+  // マーカークリック時のハンドラ
+  // ズームレベルに応じて動作を分岐：
+  // - 十分にズームインしている場合: すぐにシートを開く
+  // - ズームアウトしている場合: 寄っていってからシートを開く
   const handleClick = useCallback(
     (point: MergedPoint, map: L.Map) => {
-      // まず寄っていく（1秒かけてズーム）
-      map.flyTo([point.lat, point.lng], 19, {
-        duration: 1,
-      });
+      const currentZoom = map.getZoom();
 
-      // ズーム完了後にシートを開く
-      setTimeout(() => {
+      // シートを開く処理
+      const openSheet = () => {
         setSelectedPoint(point);
         if (point.items.length === 1) {
           router.push(`/?point=${point.items[0].uniqueId}`);
         } else {
           router.push(`/?cluster=${point.lat}-${point.lng}`);
         }
-      }, 1000);
+      };
+
+      if (currentZoom >= IMMEDIATE_OPEN_ZOOM_THRESHOLD) {
+        // 十分にズームインしている場合（クラスターにまとまらない距離感）
+        // すぐにシートを開く
+        openSheet();
+      } else {
+        // ズームアウトしている場合は寄っていく
+        map.flyTo([point.lat, point.lng], FLY_TO_ZOOM, {
+          duration: FLY_TO_DURATION,
+        });
+        // ズーム完了後にシートを開く
+        setTimeout(openSheet, FLY_TO_DURATION * 1000);
+      }
     },
     [router],
   );
