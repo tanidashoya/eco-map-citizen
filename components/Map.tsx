@@ -46,13 +46,21 @@ export default function Map({
 
   // useCallbackでメモ化してuseMemoの依存配列が安定するようにする
   const handleClick = useCallback(
-    (point: MergedPoint) => {
-      setSelectedPoint(point);
-      if (point.items.length === 1) {
-        router.push(`/?point=${point.items[0].uniqueId}`);
-      } else {
-        router.push(`/?cluster=${point.lat}-${point.lng}`);
-      }
+    (point: MergedPoint, map: L.Map) => {
+      // まず寄っていく（1秒かけてズーム）
+      map.flyTo([point.lat, point.lng], 19, {
+        duration: 1,
+      });
+
+      // ズーム完了後にシートを開く
+      setTimeout(() => {
+        setSelectedPoint(point);
+        if (point.items.length === 1) {
+          router.push(`/?point=${point.items[0].uniqueId}`);
+        } else {
+          router.push(`/?cluster=${point.lat}-${point.lng}`);
+        }
+      }, 1000);
     },
     [router],
   );
@@ -75,7 +83,10 @@ export default function Map({
           position={[point.lat, point.lng]}
           zIndexOffset={zIndexOffset}
           eventHandlers={{
-            click: () => handleClick(point),
+            click: (e) => {
+              const map = e.target._map as L.Map;
+              handleClick(point, map);
+            },
             // ホバー時に最前面に表示
             mouseover: (e) => {
               const marker = e.target;

@@ -1,5 +1,12 @@
 import L from "leaflet";
+
+// フォールバック画像のパス
+const PLACEHOLDER_IMAGE = "/placeholder.svg";
+
 export default function createCustomIcon(imageUrl: string, count: number) {
+  // URLが空の場合はフォールバック画像を使用
+  const imgSrc = imageUrl || PLACEHOLDER_IMAGE;
+
   return L.divIcon({
     html: `
       <div style="position:relative;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 3px 4px rgba(0,0,0,0.35));">
@@ -36,7 +43,7 @@ export default function createCustomIcon(imageUrl: string, count: number) {
             border-radius:20%;
             overflow:hidden;
             border:3px solid white;
-            background:#f3f4f6;
+            background:#e5e7eb;
             position:relative;
             display:flex;
             align-items:center;
@@ -53,9 +60,9 @@ export default function createCustomIcon(imageUrl: string, count: number) {
             "></div>
             <!-- 画像（読み込み完了後に表示） -->
             <img
-              src="${imageUrl}"
+              src="${imgSrc}"
               onload="this.style.opacity='1';this.previousElementSibling.style.display='none';"
-              onerror="this.style.display='none';"
+              onerror="this.src='${PLACEHOLDER_IMAGE}';this.style.opacity='1';this.previousElementSibling.style.display='none';"
               style="
                 width:100%;
                 height:100%;
