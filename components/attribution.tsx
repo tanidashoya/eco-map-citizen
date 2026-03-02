@@ -7,6 +7,7 @@ export default function Attribution({ mapTypePic }: Props) {
     <div className="absolute bottom-1 left-1 text-[12px] lg:text-[14px] leading-[1.2] bg-white/80 py-0.5 px-1.5 rounded z-[1000]">
       {mapTypePic === true ? (
         // OpenFreeMap (Bright スタイル)
+        // 公式アトリビューション形式: "OpenFreeMap © OpenMapTiles Data from OpenStreetMap"
         <>
           <a
             href="https://openfreemap.org"
@@ -25,7 +26,7 @@ export default function Attribution({ mapTypePic }: Props) {
           >
             OpenMapTiles
           </a>{" "}
-          ©{" "}
+          Data from{" "}
           <a
             href="https://www.openstreetmap.org/copyright"
             target="_blank"
