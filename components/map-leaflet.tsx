@@ -7,6 +7,11 @@ import CurrentLocationMarker from "./current-location-marker";
 import LocateButton from "./locate-button";
 import Attribution from "./attribution";
 import MapTypeButton from "./map-type-button";
+import {
+  DEFAULT_ZOOM,
+  FLY_TO_DURATION,
+  MAX_CLUSTER_RADIUS,
+} from "@/lib/map/constants";
 
 // マップ参照を外部に渡すコンポーネント
 function MapRefSetter({
@@ -42,7 +47,6 @@ export default function MapLeaflet({
   const mapUrl = process.env.NEXT_PUBLIC_MAP_URL;
   const mapAttributionPic = process.env.NEXT_PUBLIC_MAP_ATTRIBUTION_PIC;
   const mapUrlPic = process.env.NEXT_PUBLIC_MAP_URL_PIC;
-  const DEFAULT_ZOOM = 16;
 
   // マップインスタンスへの参照
   const mapRef = useRef<L.Map | null>(null);
@@ -52,7 +56,7 @@ export default function MapLeaflet({
     const cluster = e.propagatedFrom as L.MarkerCluster;
     if (mapRef.current && cluster && typeof cluster.getBounds === "function") {
       mapRef.current.flyToBounds(cluster.getBounds(), {
-        duration: 1, // 1秒かけてズーム
+        duration: FLY_TO_DURATION,
         padding: [50, 50],
       });
     }
@@ -86,7 +90,7 @@ export default function MapLeaflet({
         />
       )}
       <MarkerClusterGroup
-        maxClusterRadius={10}
+        maxClusterRadius={MAX_CLUSTER_RADIUS}
         animate={true}
         animateAddingMarkers={false}
         spiderfyOnMaxZoom={false}

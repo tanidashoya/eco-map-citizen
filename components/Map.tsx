@@ -8,8 +8,13 @@ import LocationSheet from "./location-sheet";
 import { useRouter } from "next/navigation";
 import LocationDetailSheet from "./location-detail-sheet";
 import createCustomIcon from "@/lib/map/create-custom-icon";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import MapLeaflet from "./map-leaflet";
+import {
+  IMMEDIATE_OPEN_ZOOM_THRESHOLD,
+  FLY_TO_ZOOM,
+  FLY_TO_DURATION,
+} from "@/lib/map/constants";
 
 // Next.js環境でのアイコン修正
 //Leafletの内部関数：_getIconUrlを削除⇒「勝手に探すな」（これがなければLeafletが自動的にアイコンを探しに行ってしまう）【Next.js環境ではエラーが発生するため】
@@ -29,15 +34,6 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png", //影の画像
 });
 
-// ズームしきい値 - この値以上のズームレベルではすぐにシートを開く
-// map-leaflet.tsxのmaxClusterRadius={10}と整合性を考慮
-// zoom 17以上ではほとんどのマーカーがクラスター化しない
-const IMMEDIATE_OPEN_ZOOM_THRESHOLD = 17;
-
-// flyToアニメーションの設定
-const FLY_TO_ZOOM = 19;
-const FLY_TO_DURATION = 1; // 秒
-
 export default function Map({
   mergedPoints,
   initialCenter,
@@ -46,6 +42,9 @@ export default function Map({
 }: MapProps) {
   const [selectedPoint, setSelectedPoint] = useState<MergedPoint | null>(null);
   const [mapTypePic, setMapTypePic] = useState(true);
+
+  // 連続クリック時の競合状態を防ぐためのタイマー参照
+  const flyToTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const router = useRouter();
 
@@ -59,6 +58,12 @@ export default function Map({
   // - ズームアウトしている場合: 寄っていってからシートを開く
   const handleClick = useCallback(
     (point: MergedPoint, map: L.Map) => {
+      // 前回のタイマーをキャンセル（連続クリック時の競合状態を防ぐ）
+      if (flyToTimeoutRef.current) {
+        clearTimeout(flyToTimeoutRef.current);
+        flyToTimeoutRef.current = null;
+      }
+
       const currentZoom = map.getZoom();
 
       // シートを開く処理
@@ -81,7 +86,7 @@ export default function Map({
           duration: FLY_TO_DURATION,
         });
         // ズーム完了後にシートを開く
-        setTimeout(openSheet, FLY_TO_DURATION * 1000);
+        flyToTimeoutRef.current = setTimeout(openSheet, FLY_TO_DURATION * 1000);
       }
     },
     [router],
