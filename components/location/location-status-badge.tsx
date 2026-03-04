@@ -1,4 +1,4 @@
-// components/location-status-badge.tsx
+// components/location/location-status-badge.tsx
 //
 // 役割: 位置情報の取得状態を表示するバッジコンポーネント
 

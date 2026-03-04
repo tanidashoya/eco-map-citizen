@@ -2,10 +2,10 @@
 
 import { useState, useCallback } from "react";
 import { MapProps, MergedPoint } from "@/types/maps";
-import Header from "./header";
-import LocationSheet from "./location-sheet";
+import Header from "../layout/header";
+import LocationSheet from "../location/location-sheet";
 import { useRouter } from "next/navigation";
-import LocationDetailSheet from "./location-detail-sheet";
+import LocationDetailSheet from "../location/location-detail-sheet";
 import MapMaplibre from "./map-maplibre";
 
 export default function Map({

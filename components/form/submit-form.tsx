@@ -1,6 +1,6 @@
 "use client";
 
-// components/submit-form.tsx
+// components/form/submit-form.tsx
 //
 // 役割: フォーム全体の状態管理・バリデーション・送信処理
 // 画像撮影UIは CameraCapture に委譲
@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CameraCapture } from "@/components/camera-capture";
+import { CameraCapture } from "./camera-capture";
 import { CapturedImage } from "@/types/form";
 import { ADDRESS_OPTIONS } from "@/lib/constants/prefectures";
 import { submitPost, SubmitPostResult } from "@/app/actions/action-submit-post";

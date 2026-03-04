@@ -3,7 +3,7 @@
 // 役割: レイアウトを組んで SubmitForm を置くだけ
 // ロジックはすべて submit-form.tsx に閉じている
 
-import { SubmitForm } from "@/components/submit-form";
+import { SubmitForm } from "@/components/form/submit-form";
 import { ArrowLeft, Leaf } from "lucide-react";
 import Link from "next/link";
 

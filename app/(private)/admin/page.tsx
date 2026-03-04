@@ -1,6 +1,6 @@
 "use client";
 import { Locate, Loader2 } from "lucide-react";
-import CustomButton from "@/components/custom-button";
+import CustomButton from "@/components/form/custom-button";
 import { ActionDataFormmatLocate } from "@/app/actions/action-data-format";
 // import { kmlMergeLocate } from "@/app/actions/action-kml-merge-locate";
 import { toast } from "sonner";

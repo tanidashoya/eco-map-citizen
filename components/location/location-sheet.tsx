@@ -6,7 +6,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from "./ui/sheet";
+} from "../ui/sheet";
 import { ClusterItem, LocationSheetProps } from "@/types/maps";
 import { useRouter, useSearchParams } from "next/navigation";
 import LocationItem from "./location-item";
@@ -38,22 +38,22 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
       >
         <SheetContent
           side="bottom"
-          className={`h-[60vh] lg:h-[70vh] flex flex-col items-center transition-all duration-100 gap-0 ${
+          className={`h-[70vh] lg:h-[70vh] flex flex-col items-center transition-all duration-100 gap-0 ${
             isDetailOpen ? "brightness-30 pointer-events-none" : ""
           }`}
         >
+          <SheetHeader>
+            <SheetTitle className="text-lg lg:text-xl">
+              {selectedPoint.items.length}件の投稿
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              選択した地点の投稿一覧
+            </SheetDescription>
+          </SheetHeader>
           {/* Flexアイテムが"中身の高さに引っ張られて縮まなくなる現象"を解除するもの */}
-          <div className="overflow-y-auto flex-1 min-h-0">
-            <SheetHeader>
-              <SheetTitle className="text-lg lg:text-xl">
-                {selectedPoint.items.length}件の投稿
-              </SheetTitle>
-              <SheetDescription className="sr-only">
-                選択した地点の投稿一覧
-              </SheetDescription>
-            </SheetHeader>
+          <div className="overflow-y-auto flex-1 min-h-0 w-full">
             <div className="flex items-center justify-center lg:mt-6">
-              <div className="grid grid-cols-3 lg:grid-cols-8 items-center gap-3 md:gap-4 lg:gap-6 justify-center px-2 md:px-4 lg:px-4">
+              <div className="grid grid-cols-3 lg:grid-cols-8 items-center gap-3 md:gap-4 lg:gap-6 justify-center px-2 md:px-4 lg:px-4 mt-2">
                 {selectedPoint.items.map((item: ClusterItem, index: number) => (
                   <LocationItem
                     key={`${item.uniqueId}-${index}`}

@@ -1,6 +1,6 @@
 "use client";
 
-// components/submit/image-uploader.tsx
+// components/form/image-uploader.tsx
 //
 // 役割: 画像1枚の選択・プレビュー・削除・撮り直しUIを担当
 // 状態は親（submit-form.tsx）が持ち、このコンポーネントはUIのみ

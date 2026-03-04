@@ -10,7 +10,11 @@ interface LocationItemProps {
   destination: { lat: number; lng: number };
 }
 
-export default function LocationItem({ item, clusterId, destination }: LocationItemProps) {
+export default function LocationItem({
+  item,
+  clusterId,
+  destination,
+}: LocationItemProps) {
   const name = item.name || "匿名";
   const router = useRouter();
   const handleClick = (point: ClusterItem) => {
@@ -21,7 +25,7 @@ export default function LocationItem({ item, clusterId, destination }: LocationI
       <button
         type="button"
         onClick={() => handleClick(item)}
-        className="relative cursor-pointer hover:opacity-80 transition-opacity"
+        className="relative cursor-pointer hover:opacity-80 transition-opacity mb-1"
       >
         {item.imageUrl && (
           <Image
@@ -29,7 +33,7 @@ export default function LocationItem({ item, clusterId, destination }: LocationI
             alt="投稿画像"
             width={120}
             height={120}
-            className="lg:w-36 lg:h-36 w-24 h-24 object-cover rounded mt-2"
+            className="lg:w-36 lg:h-36 w-24 h-24 object-cover rounded"
           />
         )}
         <div className="absolute bottom-1 left-1 w-full flex items-center gap-1">
@@ -37,7 +41,11 @@ export default function LocationItem({ item, clusterId, destination }: LocationI
           <p className="text-white text-xs lg:text-base truncate">{name}</p>
         </div>
       </button>
-      <LocationDetailSheet item={item} destination={destination} queryKey="item" />
+      <LocationDetailSheet
+        item={item}
+        destination={destination}
+        queryKey="item"
+      />
     </>
   );
 }

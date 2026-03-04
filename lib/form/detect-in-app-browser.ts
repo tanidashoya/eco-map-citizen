@@ -23,16 +23,16 @@ export const isInAppBrowser = (): boolean => {
 /**
  * 検出されたアプリ名を返す
  */
-export const getInAppBrowserName = (): string | null => {
-  if (typeof navigator === "undefined") return null;
+// export const getInAppBrowserName = (): string | null => {
+//   if (typeof navigator === "undefined") return null;
 
-  const ua = navigator.userAgent;
+//   const ua = navigator.userAgent;
 
-  if (/Line/i.test(ua)) return "LINE";
-  if (/FBAN|FBAV/i.test(ua)) return "Facebook";
-  if (/Instagram/i.test(ua)) return "Instagram";
-  if (/Twitter/i.test(ua)) return "X (Twitter)";
-  if (/MicroMessenger/i.test(ua)) return "WeChat";
+//   if (/Line/i.test(ua)) return "LINE";
+//   if (/FBAN|FBAV/i.test(ua)) return "Facebook";
+//   if (/Instagram/i.test(ua)) return "Instagram";
+//   if (/Twitter/i.test(ua)) return "X (Twitter)";
+//   if (/MicroMessenger/i.test(ua)) return "WeChat";
 
-  return null;
-};
+//   return null;
+// };

@@ -1,6 +1,6 @@
 "use client";
 
-// components/camera-capture.tsx
+// components/form/camera-capture.tsx
 //
 // 役割: カメラで撮影 + Geolocation APIで現在地を取得
 // watchPositionで位置を常に追跡し、撮影ボタン押下時は同期的にカメラを起動
@@ -24,7 +24,7 @@ import {
 } from "@/types/form";
 import { compressImageLib } from "@/lib/form/compress-image-lib";
 import { isInAppBrowser } from "@/lib/form/detect-in-app-browser";
-import { LocationStatusBadge } from "@/components/location-status-badge";
+import { LocationStatusBadge } from "@/components/location/location-status-badge";
 
 // ----------------------------------------------------------------
 // 定数
@@ -32,7 +32,7 @@ import { LocationStatusBadge } from "@/components/location-status-badge";
 
 const MAX_FILE_SIZE_MB = 15;
 const ACCEPTED_TYPES = "image/*";
-const emptySubscribe = () => () => {};
+const emptySubscribe = () => () => {}; //👉 空のサブスクライブ関数（何もしない）⇒一度決まったら変わらないので購読不要
 const getInAppSnapshot = () => isInAppBrowser();
 const getInAppServerSnapshot = () => false;
 
@@ -53,8 +53,12 @@ export function CameraCapture({
     null,
   );
   // 位置情報の取得状態（初期状態でGeolocation API対応を判定）
+  //遅延初期化を使用して、一度確認しておけばいい条件だから、再レンダリングのたびに初期値の再計算をする必要をなくしている。
   const [locationStatus, setLocationStatus] = useState<LocationStatus>(() => {
-    // SSR時はnavigatorが存在しないため"loading"を返す
+    // SSR時はnavigatorが存在しないため"loading"を返す（今はサーバーで実行されているかの条件分岐(サーバーはwindowオブジェクトを持たない)）
+    //これは表示のためというよりもサーバー側でnavigaterに触れた場合にエラーが発生するため、サーバー側では"loading"を返すようにしている。
+    //  サーバーとブラウザで初期値が異なる可能性はあるが、
+    // 現在のUI構造では大きなDOM差分は生じないため実務上問題になりにくい
     if (typeof window === "undefined") return "loading";
     // Geolocation API非対応の場合は"error"
     return navigator.geolocation ? "loading" : "error";
@@ -63,6 +67,14 @@ export function CameraCapture({
   const watchIdRef = useRef<number | null>(null);
 
   // アプリ内ブラウザ検出（SSR安全: サーバーではfalse、クライアントで実際の値を返す）
+  //👉 useSyncExternalStore:（サーバー）とクライアントで値が違う"外部の状態"を、安全に扱うための技術
+  /*
+  引数	役割
+  第1引数 subscribe	外部状態が変わったら再レンダーさせる
+  第2引数 getSnapshot	クライアントで現在値を返す
+  第3引数 getServerSnapshot	サーバーで現在値を返す（SSR時にサーバー用のスナップショットを明示的に指定しないと、
+　　　　　Reactがクライアント用のgetSnapshotを使おうとして整合性が崩れる可能性があるため第三引数を指定））
+  */
   const isInApp = useSyncExternalStore(
     emptySubscribe,
     getInAppSnapshot,
@@ -71,12 +83,17 @@ export function CameraCapture({
 
   // ----------------------------------------------------------------
   // 位置情報の継続的な追跡（watchPosition）
+  // 以前はgetcurrentpositionにしていたが非同期処理の中で位置情報を取得する実装にしており、
+  // その非同期処理の中でinput.click()でカメラを起動していたが、これがiOS Safariでブロックされるため、
+  // watchPositionを使用して位置情報を継続的に追跡するようにした。
   // ----------------------------------------------------------------
+  //初回マウント時に位置情報を取得し、現在位置を設定する
   useEffect(() => {
     // Geolocation API非対応の場合は何もしない（初期状態で"error"になっている）
     if (!navigator.geolocation) return;
 
     // 位置情報の追跡を開始
+    //ref は「watchPositionのIDを保存するため」に使っている
     watchIdRef.current = navigator.geolocation.watchPosition(
       // 成功時
       (position) => {
@@ -98,8 +115,8 @@ export function CameraCapture({
       // オプション
       {
         enableHighAccuracy: true,
-        maximumAge: 5000, // 5秒以内のキャッシュを使用
-        timeout: 10000, // 10秒でタイムアウト
+        maximumAge: 3000, // 3秒以内のキャッシュを使用
+        timeout: 20000, // 20秒でタイムアウト
       },
     );
 

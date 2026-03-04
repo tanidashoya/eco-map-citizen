@@ -1,5 +1,5 @@
 import { getMapPoints } from "@/lib/google-api/google-api";
-import MapWrapper from "@/components/map-wrapper";
+import MapWrapper from "@/components/map/map-wrapper";
 
 // キャッシュを無効化し、常に最新データを取得
 export const dynamic = "force-dynamic";

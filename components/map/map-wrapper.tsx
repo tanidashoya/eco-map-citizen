@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAtom } from "jotai";
 import { Point } from "@/types/maps";
 import { Loader2 } from "lucide-react";
@@ -8,7 +8,9 @@ import { mergePoints } from "@/lib/geo/merge.points";
 import { useCurrentLocation } from "@/lib/map/use-current-location";
 import { cachedCenterAtom } from "@/store/map-store";
 
-const Map = dynamic(() => import("./Map"), { ssr: false });
+const Map = dynamic(() => import("./index"), { ssr: false });
+
+const SESSION_KEY = "map-session-initialized";
 
 export default function MapWrapper({
   pointsWithImages,
@@ -17,6 +19,12 @@ export default function MapWrapper({
 }) {
   // Jotai atomWithStorageから初期位置キャッシュを取得（ローカルストレージに永続化）
   const [cachedCenter, setCachedCenter] = useAtom(cachedCenterAtom);
+
+  // 初回マウントかどうかを判定（セッションストレージで管理）
+  const [isFirstMount] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return !sessionStorage.getItem(SESSION_KEY);
+  });
 
   // 現在地を継続監視で取得（一元管理）
   const { coords: currentLocation, isLoading: isLocationLoading } =
@@ -46,8 +54,17 @@ export default function MapWrapper({
     }
   }, [derivedCenter, cachedCenter, setCachedCenter]);
 
-  //cachedCenterがあればそれを使用し、なければderivedCenterを使用
-  const initialCenter = cachedCenter ?? derivedCenter;
+  // セッションストレージにフラグを設定（初回マウント完了を記録）
+  useEffect(() => {
+    if (derivedCenter && isFirstMount) {
+      sessionStorage.setItem(SESSION_KEY, "true");
+    }
+  }, [derivedCenter, isFirstMount]);
+
+  // 初回マウント時は現在地を優先、2回目以降はcachedCenterを優先
+  const initialCenter = isFirstMount
+    ? (derivedCenter ?? cachedCenter)
+    : (cachedCenter ?? derivedCenter);
 
   if (!initialCenter) {
     return (
