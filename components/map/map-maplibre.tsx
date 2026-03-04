@@ -20,6 +20,7 @@ import Attribution from "./attribution";
 import MapTypeButton from "./map-type-button";
 import MarkerIcon from "./marker-icon";
 import LocateButton from "./locate-button";
+import CategoryFilter, { CategoryFilterValue } from "./category-filter";
 
 // Supercluster用の型定義
 interface ClusterPointProperties {
@@ -61,6 +62,22 @@ export default function MapMaplibre({
   );
   const [brightStyle, setBrightStyle] =
     useState<maplibregl.StyleSpecification | null>(null);
+  const [categoryFilter, setCategoryFilter] =
+    useState<CategoryFilterValue>("all");
+
+  // カテゴリでフィルタリングされたmergedPoints
+  const filteredMergedPoints = useMemo(() => {
+    if (categoryFilter === "all") {
+      return mergedPoints;
+    }
+
+    return mergedPoints
+      .map((point) => ({
+        ...point,
+        items: point.items.filter((item) => item.category === categoryFilter),
+      }))
+      .filter((point) => point.items.length > 0);
+  }, [mergedPoints, categoryFilter]);
 
   // OpenFreeMapスタイルを取得してローマ字ラベルを削除
   useEffect(() => {
@@ -71,7 +88,7 @@ export default function MapMaplibre({
       });
   }, []);
 
-  // Superclusterインスタンスの作成
+  // Superclusterインスタンスの作成（フィルタリング済みデータを使用）
   const supercluster = useMemo(() => {
     const cluster = new Supercluster<ClusterPointProperties, ClusterProperties>(
       {
@@ -81,7 +98,7 @@ export default function MapMaplibre({
       },
     );
 
-    const points: PointFeature[] = mergedPoints.map((point, index) => ({
+    const points: PointFeature[] = filteredMergedPoints.map((point, index) => ({
       type: "Feature",
       properties: {
         cluster: false as const,
@@ -97,7 +114,7 @@ export default function MapMaplibre({
 
     cluster.load(points);
     return cluster;
-  }, [mergedPoints]);
+  }, [filteredMergedPoints]);
 
   // 表示するクラスター/マーカーを計算
   const clusters = useMemo(() => {
@@ -153,14 +170,14 @@ export default function MapMaplibre({
     [supercluster],
   );
 
-  // 個別マーカーのクリックハンドラ
+  // 個別マーカーのクリックハンドラ（フィルタリング済みデータを使用）
   const handleMarkerClick = useCallback(
     (pointIndex: number) => {
-      const point = mergedPoints[pointIndex];
+      const point = filteredMergedPoints[pointIndex];
       if (!point) return;
       onMarkerClick(point, false);
     },
-    [mergedPoints, onMarkerClick],
+    [filteredMergedPoints, onMarkerClick],
   );
 
   // 初期表示時にboundsを設定
@@ -278,6 +295,11 @@ export default function MapMaplibre({
           </Marker>
         )}
       </Map>
+
+      {/* カテゴリフィルター */}
+      <div className="absolute top-20 left-4 z-[999] lg:top-24 lg:left-6">
+        <CategoryFilter value={categoryFilter} onChange={setCategoryFilter} />
+      </div>
 
       {/* UIコントロール */}
       <div className="absolute bottom-14 right-4 z-[999] flex flex-col items-end gap-2 lg:bottom-8 lg:right-6">
