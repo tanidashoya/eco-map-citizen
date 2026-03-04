@@ -153,7 +153,7 @@ export default function MapMaplibre({
     handleMoveEnd();
   }, [handleMoveEnd]);
 
-  // クラスターのクリックハンドラ
+  // クラスターのクリックハンドラ（即座に分離 + 同時にflyTo）
   const handleClusterClick = useCallback(
     (clusterId: number, lng: number, lat: number) => {
       const expansionZoom = Math.min(
@@ -161,6 +161,10 @@ export default function MapMaplibre({
         20,
       );
 
+      // 即座にズーム状態を更新してクラスターを分離
+      setZoom(expansionZoom);
+
+      // 同時にflyToアニメーションを開始
       mapRef.current?.flyTo({
         center: [lng, lat],
         zoom: expansionZoom,
