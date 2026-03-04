@@ -1,10 +1,57 @@
 "use client";
 
 import * as React from "react";
+import { useRef, useCallback } from "react";
 import { XIcon } from "lucide-react";
 import { Dialog as SheetPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
+
+// スワイプで閉じるためのカスタムフック
+function useSwipeToClose(
+  direction: "down" | "up" | "right" | "left",
+  onClose: () => void,
+  threshold = 80,
+) {
+  const startY = useRef(0);
+  const startX = useRef(0);
+  const currentY = useRef(0);
+  const currentX = useRef(0);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    startY.current = e.touches[0].clientY;
+    startX.current = e.touches[0].clientX;
+    currentY.current = e.touches[0].clientY;
+    currentX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    currentY.current = e.touches[0].clientY;
+    currentX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    const deltaY = currentY.current - startY.current;
+    const deltaX = currentX.current - startX.current;
+
+    // 方向に応じてスワイプを検出
+    if (direction === "down" && deltaY > threshold) {
+      onClose();
+    } else if (direction === "up" && deltaY < -threshold) {
+      onClose();
+    } else if (direction === "right" && deltaX > threshold) {
+      onClose();
+    } else if (direction === "left" && deltaX < -threshold) {
+      onClose();
+    }
+  }, [direction, threshold, onClose]);
+
+  return {
+    onTouchStart: handleTouchStart,
+    onTouchMove: handleTouchMove,
+    onTouchEnd: handleTouchEnd,
+  };
+}
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
@@ -87,6 +134,52 @@ function SheetContent({
   );
 }
 
+// ドラッグハンドル（下から出るシート用 - 上部に配置）
+function SheetDragHandle({
+  onSwipeDown,
+  className,
+}: {
+  onSwipeDown: () => void;
+  className?: string;
+}) {
+  const swipeHandlers = useSwipeToClose("down", onSwipeDown, 60);
+
+  return (
+    <div
+      className={cn(
+        "flex justify-center items-center py-3 cursor-grab active:cursor-grabbing touch-none",
+        className,
+      )}
+      {...swipeHandlers}
+    >
+      <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+    </div>
+  );
+}
+
+// スワイプエッジ（右から出るシート用 - 左端に配置）
+function SheetSwipeEdge({
+  onSwipeRight,
+  className,
+}: {
+  onSwipeRight: () => void;
+  className?: string;
+}) {
+  const swipeHandlers = useSwipeToClose("right", onSwipeRight, 60);
+
+  return (
+    <div
+      className={cn(
+        "absolute left-0 top-0 bottom-0 w-6 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none",
+        className,
+      )}
+      {...swipeHandlers}
+    >
+      <div className="w-1 h-16 bg-gray-300 rounded-full" />
+    </div>
+  );
+}
+
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -142,4 +235,6 @@ export {
   SheetFooter,
   SheetTitle,
   SheetDescription,
+  SheetDragHandle,
+  SheetSwipeEdge,
 };

@@ -6,6 +6,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
+  SheetDragHandle,
 } from "../ui/sheet";
 import { ClusterItem, LocationSheetProps } from "@/types/maps";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -38,11 +39,13 @@ export default function LocationSheet({ selectedPoint }: LocationSheetProps) {
       >
         <SheetContent
           side="bottom"
-          className={`h-[70vh] lg:h-[70vh] flex flex-col items-center transition-all duration-100 gap-0 ${
+          className={`h-[65vh] lg:h-[70vh] flex flex-col items-center transition-all duration-100 gap-0 rounded-t-xl ${
             isDetailOpen ? "brightness-30 pointer-events-none" : ""
           }`}
         >
-          <SheetHeader>
+          {/* ドラッグハンドル（スワイプで閉じる） */}
+          <SheetDragHandle onSwipeDown={() => router.replace("/")} />
+          <SheetHeader className="pt-0">
             <SheetTitle className="text-lg lg:text-xl">
               {selectedPoint.items.length}件の投稿
             </SheetTitle>

@@ -7,6 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
+  SheetSwipeEdge,
 } from "@/components/ui/sheet";
 import { Calendar, MessageCircle, User } from "lucide-react";
 import GoogleMapButton from "./google-map-button";
@@ -53,6 +54,8 @@ export default function LocationDetailSheet({
         side="right"
         className="!w-full !max-w-none !h-full lg:!w-[70%] flex flex-col gap-0"
       >
+        {/* スワイプエッジ（左端をスワイプで閉じる） */}
+        <SheetSwipeEdge onSwipeRight={() => router.back()} />
         <div className="overflow-y-auto flex-1 min-h-0">
           <SheetHeader>
             <SheetTitle className="text-lg lg:text-xl">
