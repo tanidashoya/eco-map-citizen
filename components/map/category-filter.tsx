@@ -32,18 +32,21 @@ export default function CategoryFilter({
   value,
   onChange,
 }: CategoryFilterProps) {
-  const selectedOption = CATEGORY_OPTIONS.find((opt) => opt.value === value);
-  const Icon = selectedOption?.icon ?? MapPin;
+  // const selectedOption = CATEGORY_OPTIONS.find((opt) => opt.value === value);
+  // const Icon = selectedOption?.icon ?? MapPin;
 
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[140px] bg-white shadow-md border-green-500 border-2">
-        <div className="flex items-center gap-2">
-          <Icon className="size-4 text-green-600" />
-          <SelectValue />
-        </div>
+      <SelectTrigger className="w-fit bg-white shadow-md">
+        <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent
+        position="popper"
+        side="bottom"
+        align="start"
+        sideOffset={4}
+        avoidCollisions={false}
+      >
         {CATEGORY_OPTIONS.map((option) => (
           <SelectItem key={option.value} value={option.value}>
             <div className="flex items-center gap-2">

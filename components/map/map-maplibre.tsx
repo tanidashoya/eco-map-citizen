@@ -297,7 +297,7 @@ export default function MapMaplibre({
       </Map>
 
       {/* カテゴリフィルター */}
-      <div className="absolute top-20 left-4 z-[999] lg:top-24 lg:left-6">
+      <div className="absolute top-22 left-5 z-[999] lg:top-24 lg:left-16 shadow-md">
         <CategoryFilter value={categoryFilter} onChange={setCategoryFilter} />
       </div>
 
