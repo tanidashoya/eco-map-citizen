@@ -33,6 +33,7 @@ import { LocationStatusBadge } from "@/components/location/location-status-badge
 
 const MAX_FILE_SIZE_MB = 15;
 const ACCEPTED_TYPES = "image/*";
+const CAMERA_ACTIVE_KEY = "cameraActive"; // sessionStorage用キー
 const emptySubscribe = () => () => {}; //👉 空のサブスクライブ関数（何もしない）⇒一度決まったら変わらないので購読不要
 const getInAppSnapshot = () => isInAppBrowser();
 const getInAppServerSnapshot = () => false;
@@ -83,17 +84,35 @@ export function CameraCapture({
   );
 
   // ----------------------------------------------------------------
-  // [DEBUG] コンポーネントのマウント/再マウント検知
-  // Androidでカメラから戻った時にページが再読み込みされていないか確認
+  // Androidでカメラから戻った時のページ再読み込み対策
+  // pageshowイベントでBFCacheからの復元を検知し、inputのfilesを処理
   // ----------------------------------------------------------------
   useEffect(() => {
-    const mountTime = new Date().toISOString();
-    console.log(`[DEBUG] CameraCapture MOUNTED at ${mountTime}`);
-    alert(`[DEBUG] コンポーネントマウント\n${mountTime}`); // 画面上で確認用
+    const handlePageShow = (e: PageTransitionEvent) => {
+      const wasCameraActive = sessionStorage.getItem(CAMERA_ACTIVE_KEY);
 
-    return () => {
-      console.log("[DEBUG] CameraCapture UNMOUNTED");
+      if (wasCameraActive === "true") {
+        // フラグをクリア
+        sessionStorage.removeItem(CAMERA_ACTIVE_KEY);
+
+        if (e.persisted) {
+          // BFCacheから復元された場合、inputのfilesを処理
+          const input = fileInputRef.current;
+          if (input?.files?.[0]) {
+            // changeイベントを手動で発火
+            const event = new Event("change", { bubbles: true });
+            input.dispatchEvent(event);
+          }
+        } else {
+          // ページが完全に再読み込みされた場合
+          // ユーザーに再撮影を促す
+          toast.info("撮影が中断されました。もう一度撮影してください。");
+        }
+      }
     };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
   }, []);
 
   // ----------------------------------------------------------------
@@ -155,12 +174,9 @@ export function CameraCapture({
   // 撮影ボタン押下時のハンドラ（同期関数 - iOS対応のため重要）
   // ----------------------------------------------------------------
   const handleCaptureClick = () => {
-    console.log("[DEBUG] handleCaptureClick called, capturedImage:", !!capturedImage);
-
     // 撮り直しの場合、先に既存画像への参照を解放（メモリ効率改善）
     // これによりGCが古い画像を解放可能な状態になる
     if (capturedImage) {
-      console.log("[DEBUG] 撮り直し - onCapture(null)呼び出し");
       onCapture(null);
     }
 
@@ -182,6 +198,9 @@ export function CameraCapture({
       return;
     }
 
+    // カメラ起動中フラグを立てる（Android再読み込み対策）
+    sessionStorage.setItem(CAMERA_ACTIVE_KEY, "true");
+
     // 同期的にカメラを起動（これが重要！）
     // iOS Safariでは非同期処理後のclick()がUser Gestureとして認識されないため
     fileInputRef.current?.click();
@@ -191,34 +210,24 @@ export function CameraCapture({
   // ファイル選択（撮影完了）時のハンドラ
   // ----------------------------------------------------------------
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("[DEBUG] handleFileChange called");
-    alert("[DEBUG] handleFileChange呼び出し"); // 画面上で確認用
+    // カメラ起動中フラグをクリア
+    sessionStorage.removeItem(CAMERA_ACTIVE_KEY);
 
     try {
       const file = e.target.files?.[0];
-      const fileInfo = file ? `${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)` : "なし";
-      console.log("[DEBUG] file:", fileInfo);
-      alert(`[DEBUG] ファイル: ${fileInfo}`); // 画面上で確認用
-
-      if (!file) {
-        console.log("[DEBUG] ファイルなし - return");
-        return;
-      }
+      if (!file) return;
 
       // ファイルサイズチェック（圧縮前）
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        console.log("[DEBUG] ファイルサイズ超過");
         toast.error(`ファイルサイズは ${MAX_FILE_SIZE_MB}MB 以内にしてください`);
         return;
       }
 
       // watchPositionで追跡中の位置を使用（APIを呼ばない）
       const location = currentLocation;
-      console.log("[DEBUG] location:", location);
 
       // 位置情報が取得できなかった場合は警告
       if (!location) {
-        console.log("[DEBUG] 位置情報なし - 警告表示");
         toast.warning("位置情報を取得できませんでした。再度撮影してください。");
       }
 
@@ -236,9 +245,6 @@ export function CameraCapture({
       //   return;
       // }
 
-      // [一時対応] 圧縮せず元のファイルをそのまま使用
-      console.log(`[DEBUG] 元ファイル: ${(file.size / 1024 / 1024).toFixed(1)}MB（圧縮なし）`);
-
       // 親コンポーネントにデータを返す
       const capturedData: CapturedImage = {
         previewUrl: "",
@@ -246,15 +252,12 @@ export function CameraCapture({
         location,
         capturedAt: new Date().toISOString(),
       };
-      console.log("[DEBUG] onCapture呼び出し前");
       onCapture(capturedData);
-      console.log("[DEBUG] onCapture呼び出し完了");
 
       // リセット
       e.target.value = "";
-      console.log("[DEBUG] handleFileChange完了");
     } catch (error) {
-      console.error("[DEBUG] handleFileChangeでエラー:", error);
+      console.error("撮影処理でエラー:", error);
       toast.error("撮影処理でエラーが発生しました");
     }
   };
