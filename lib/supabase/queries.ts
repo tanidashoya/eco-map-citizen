@@ -1,24 +1,7 @@
+//サーバー側のクライアントを使ってsupabaseのデータを取得する
 import { createSupabaseServerClient } from "./server";
 import { Point } from "@/types/maps";
-
-/**
- * Supabase observations テーブルの行の型
- */
-export interface Observation {
-  id: string;
-  created_at: string;
-  image_category: string;
-  image_url: string;
-  observer_name: string;
-  observer_area: string | null;
-  observer_birth_date: string | null;
-  comment: string | null;
-  latitude: number;
-  longitude: number;
-  captured_at: string | null;
-  status: "pending" | "approved" | "rejected";
-  reviewed_at: string | null;
-}
+import { Observation } from "@/types/supabase";
 
 /**
  * 承認済みのobservationsを取得し、Point型に変換する
@@ -26,18 +9,18 @@ export interface Observation {
  */
 export async function getApprovedObservations(): Promise<Point[]> {
   const supabase = await createSupabaseServerClient();
-
   const { data, error } = await supabase
     .from("observations")
     .select(
       "id, image_category, image_url, observer_name, comment, latitude, longitude, captured_at",
     )
-    .eq("status", "approved")
+    .eq("status", "approved") //承認済みのobservationsを取得
     .order("captured_at", { ascending: false });
 
   if (error) {
     console.error("Failed to fetch observations:", error);
-    return [];
+    // エラーをthrowしてerror.tsxでエラー画面を表示
+    throw new Error("マップデータの取得に失敗しました");
   }
 
   // Point型に変換
@@ -45,8 +28,8 @@ export async function getApprovedObservations(): Promise<Point[]> {
     uniqueId: obs.id,
     category: obs.image_category,
     imageUrl: obs.image_url,
-    name: obs.observer_name,
-    comment: obs.comment ?? undefined,
+    name: obs.observer_name ?? "",
+    comment: obs.comment ?? "",
     lat: obs.latitude,
     lng: obs.longitude,
     shootingDate: obs.captured_at ?? "",
@@ -66,7 +49,8 @@ export async function getAllObservations(): Promise<Observation[]> {
 
   if (error) {
     console.error("Failed to fetch all observations:", error);
-    return [];
+    // エラーをthrowしてerror.tsxでエラー画面を表示
+    throw new Error("データの取得に失敗しました");
   }
 
   return data ?? [];

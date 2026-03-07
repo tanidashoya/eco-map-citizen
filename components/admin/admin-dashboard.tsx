@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Observation } from "@/lib/supabase/queries";
+import { Observation } from "@/types/supabase";
 import {
   updateObservationStatus,
   deleteObservation,

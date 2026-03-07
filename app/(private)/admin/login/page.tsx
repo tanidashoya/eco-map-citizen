@@ -12,8 +12,9 @@ export default function LoginPage() {
     AuthResult | null,
     FormData
   >(async (_prevState, formData) => {
-    return await signIn(formData);
-  }, null);
+    const result = await signIn(formData);
+    return result; // ログインに成功した場合はresultを返してstateを更新
+  }, null); //フォーム送信前のstateの初期値
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
