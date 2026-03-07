@@ -22,7 +22,8 @@ import {
   GeoLocation,
   LocationStatus,
 } from "@/types/form";
-import { compressImageLib } from "@/lib/form/compress-image-lib";
+// [一時無効化] compressImageLibがメモリ不足の原因か確認中
+// import { compressImageLib } from "@/lib/form/compress-image-lib";
 import { isInAppBrowser } from "@/lib/form/detect-in-app-browser";
 import { LocationStatusBadge } from "@/components/location/location-status-badge";
 
@@ -131,9 +132,10 @@ export function CameraCapture({
   // ----------------------------------------------------------------
   // 画像圧縮
   // ----------------------------------------------------------------
-  const compressImage = async (file: File): Promise<File> => {
-    return await compressImageLib(file);
-  };
+  // [一時無効化] compressImageLibがメモリ不足の原因か確認中
+  // const compressImage = async (file: File): Promise<File> => {
+  //   return await compressImageLib(file);
+  // };
 
   // ----------------------------------------------------------------
   // 撮影ボタン押下時のハンドラ（同期関数 - iOS対応のため重要）
@@ -190,22 +192,26 @@ export function CameraCapture({
     }
 
     // 画像を圧縮
-    let compressedFile: File;
-    try {
-      compressedFile = await compressImage(file);
-      console.log(
-        `圧縮: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(1)}MB`,
-      );
-    } catch (error) {
-      console.error("圧縮エラー:", error);
-      toast.error("画像の圧縮に失敗しました");
-      return;
-    }
+    // [一時無効化] compressImageLibがメモリ不足の原因か確認中
+    // let compressedFile: File;
+    // try {
+    //   compressedFile = await compressImage(file);
+    //   console.log(
+    //     `圧縮: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(1)}MB`,
+    //   );
+    // } catch (error) {
+    //   console.error("圧縮エラー:", error);
+    //   toast.error("画像の圧縮に失敗しました");
+    //   return;
+    // }
+
+    // [一時対応] 圧縮せず元のファイルをそのまま使用
+    console.log(`元ファイル: ${(file.size / 1024 / 1024).toFixed(1)}MB（圧縮なし）`);
 
     // 親コンポーネントにデータを返す
     const capturedData: CapturedImage = {
       previewUrl: "",
-      file: compressedFile,
+      file: file, // 圧縮なしで元のファイルを使用
       location,
       capturedAt: new Date().toISOString(),
     };

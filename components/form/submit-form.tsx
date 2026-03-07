@@ -35,8 +35,7 @@ import { submitObservation } from "@/app/actions/observations";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Leaf, Mountain } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-// [一時無効化] クライアント側リサイズがメモリ不足の原因の可能性があるため
-// import { resizeImage } from "@/lib/image/resize-image";
+import { resizeImage } from "@/lib/image/resize-image";
 
 type SubmitResult = { success: boolean; message: string };
 
@@ -92,18 +91,12 @@ export function SubmitForm() {
       });
 
       // ── Step 1: 画像リサイズ（クライアント側）──
-      // [一時無効化] クライアント側リサイズがメモリ不足の原因の可能性があるため
       // WebP 優先、非対応端末は JPEG にフォールバック
-      // const { blob, mimeType, extension } = await resizeImage(
-      //   capturedImage.file,
-      //   1200,
-      //   0.8,
-      // );
-
-      // [一時対応] リサイズせず元のファイルをそのままアップロード
-      const blob = capturedImage.file;
-      const mimeType = capturedImage.file.type || "image/jpeg";
-      const extension = mimeType.split("/")[1] || "jpeg";
+      const { blob, mimeType, extension } = await resizeImage(
+        capturedImage.file,
+        1200,
+        0.8,
+      );
 
       // ── Step 2: Storage に直接アップロード（Client → Supabase Storage）──
       const supabase = createSupabaseBrowserClient();
