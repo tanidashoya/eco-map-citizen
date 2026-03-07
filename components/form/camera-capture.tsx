@@ -219,7 +219,9 @@ export function CameraCapture({
 
       // ファイルサイズチェック（圧縮前）
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        toast.error(`ファイルサイズは ${MAX_FILE_SIZE_MB}MB 以内にしてください`);
+        toast.error(
+          `ファイルサイズは ${MAX_FILE_SIZE_MB}MB 以内にしてください`,
+        );
         return;
       }
 
@@ -347,7 +349,7 @@ export function CameraCapture({
           </div>
         </div>
       ) : (
-        /* 初期状態：撮影ボタン */
+        /* 初期状態：撮影ボタン部分 */
         <div className="space-y-2">
           <button
             type="button"
