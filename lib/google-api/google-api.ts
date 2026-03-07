@@ -3,7 +3,9 @@ import { Readable } from "stream";
 
 // ========== 認証設定 ==========
 
-// サービスアカウント認証（スプレッドシート用）
+// サービスアカウント認証（スプレッドシート・ドライブ共通）
+// ドライブは個人アカウントのフォルダをサービスアカウントと共有することで
+// 個人アカウントのストレージを使用してアップロード可能
 const auth = new google.auth.GoogleAuth({
   credentials: {
     client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -16,17 +18,7 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const sheets = google.sheets({ version: "v4", auth }); //Sheets API用のクライアント
-
-// OAuth認証（Drive用 - 個人アカウントとして操作）
-// サービスアカウントはストレージ容量が0のため、OAuthリフレッシュトークンを使用
-const oauthClient = new google.auth.OAuth2(
-  process.env.GOOGLE_OAUTH_CLIENT_ID,
-  process.env.GOOGLE_OAUTH_CLIENT_SECRET,
-);
-oauthClient.setCredentials({
-  refresh_token: process.env.GOOGLE_OAUTH_REFRESH_TOKEN,
-});
-const oauthDrive = google.drive({ version: "v3", auth: oauthClient });
+const drive = google.drive({ version: "v3", auth }); //Drive API用のクライアント
 
 const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID!;
 
@@ -110,9 +102,9 @@ export function extractFileId(url: string): string | null {
   return null;
 }
 
-// OAuth認証でDriveから画像を取得
+// サービスアカウント認証でDriveから画像を取得
 export async function getImageBuffer(fileId: string): Promise<Buffer> {
-  const response = await oauthDrive.files.get(
+  const response = await drive.files.get(
     { fileId, alt: "media" },
     { responseType: "arraybuffer" },
   );
@@ -131,7 +123,9 @@ export function convertDriveUrl(
   return undefined;
 }
 
-// OAuth認証でDriveにアップロード
+// サービスアカウント認証でDriveにアップロード
+// 共有ドライブ（Shared Drive）を使用することで、サービスアカウントでもアップロード可能
+// ※通常の共有フォルダではなく「共有ドライブ」が必要
 export async function uploadImageToDrive(
   image: Buffer,
   folderId: string,
@@ -139,7 +133,7 @@ export async function uploadImageToDrive(
 ): Promise<string> {
   const ext = mimeType.split("/")[1] ?? "jpg";
   const name = `image_${Date.now()}.${ext}`;
-  const response = await oauthDrive.files.create({
+  const response = await drive.files.create({
     requestBody: {
       name: name,
       mimeType: mimeType,
@@ -150,14 +144,16 @@ export async function uploadImageToDrive(
       body: Readable.from(image),
     },
     fields: "id",
+    supportsAllDrives: true, // 共有ドライブ対応
   });
 
-  await oauthDrive.permissions.create({
+  await drive.permissions.create({
     fileId: response.data.id!,
     requestBody: {
       role: "reader",
       type: "anyone",
     },
+    supportsAllDrives: true, // 共有ドライブ対応
   });
 
   return `https://drive.google.com/uc?export=view&id=${response.data.id!}`;

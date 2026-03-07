@@ -4,6 +4,7 @@
 //
 // 役割: フォーム全体の状態管理・バリデーション・送信処理
 // 画像撮影UIは CameraCapture に委譲
+// 画像アップロードはクライアント側でSupabase Storageに直接アップロード
 
 import { useActionState, useState, useRef } from "react";
 import {
@@ -30,9 +31,13 @@ import { toast } from "sonner";
 import { CameraCapture } from "./camera-capture";
 import { CapturedImage } from "@/types/form";
 import { ADDRESS_OPTIONS } from "@/lib/constants/prefectures";
-import { submitPost, SubmitPostResult } from "@/app/actions/action-submit-post";
+import { submitObservation } from "@/app/actions/observations";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Leaf, Mountain } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { resizeImage } from "@/lib/image/resize-image";
+
+type SubmitResult = { success: boolean; message: string };
 
 // カテゴリの選択肢
 //as constを使用することで、カテゴリの選択肢が変更されないことを保証(valueとlabelの型を文字列リテラル型に固定)⇒typeScriptの型安全を保証
@@ -52,10 +57,9 @@ export function SubmitForm() {
   const formRef = useRef<HTMLFormElement>(null); //form(DOM要素)のref(参照)を取得⇒form.currentに実際のformのDOM要素が入る
 
   // useActionStateでServer Actionの状態を管理
-  //formActionが発火するとブラウザがformDataを生成してuseActionStateに渡す(そのformDataにappendで値を使いしてSubmitPostに渡す)
-  //name 属性を持つフォーム要素の value を集めて👉 FormData を生成する
+  // フロー: クライアント側で画像リサイズ → Storage Upload → Server Action (DB INSERT)
   const [, formAction, isPending] = useActionState<
-    SubmitPostResult | null,
+    SubmitResult | null,
     FormData
   >(async (_prevState, formData) => {
     try {
@@ -86,28 +90,75 @@ export function SubmitForm() {
         capturedAt: capturedImage.capturedAt,
       });
 
-      // カテゴリ、画像、位置情報、撮影時間を追加
-      formData.append("category", category);
-      formData.append("image", capturedImage.file);
-      formData.append("latitude", capturedImage.location.lat.toString());
-      formData.append("longitude", capturedImage.location.lng.toString());
-      formData.append("capturedAt", capturedImage.capturedAt);
+      // ── Step 1: 画像リサイズ（クライアント側）──
+      // WebP 優先、非対応端末は JPEG にフォールバック
+      const { blob, mimeType, extension } = await resizeImage(
+        capturedImage.file,
+        1200,
+        0.8,
+      );
 
-      // Server Actionを呼び出し
-      const result = await submitPost(formData);
+      // ── Step 2: Storage に直接アップロード（Client → Supabase Storage）──
+      const supabase = createSupabaseBrowserClient();
+      const uuid = crypto.randomUUID();
+      const sanitizedName = capturedImage.file.name
+        .replace(/[^a-zA-Z0-9.-]/g, "")
+        .replace(/\.[^.]+$/, "");
+      const storagePath = `${uuid}-${sanitizedName || "image"}.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("observations")
+        .upload(storagePath, blob, {
+          contentType: mimeType,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        toast.error(`画像アップロード失敗: ${uploadError.message}`);
+        return {
+          success: false,
+          message: `画像アップロード失敗: ${uploadError.message}`,
+        };
+      }
+
+      // ── Step 3: 公開 URL を取得 ──
+      const { data: urlData } = supabase.storage
+        .from("observations")
+        .getPublicUrl(storagePath);
+
+      // ── Step 4: Server Action で DB INSERT ──
+      const name = (formData.get("name") as string) || "匿名";
+      const observerArea = (formData.get("address") as string) || undefined;
+      const birthdate = (formData.get("birthdate") as string) || undefined;
+      const comment = (formData.get("comment") as string) || undefined;
+
+      const result = await submitObservation({
+        imageCategory: category,
+        imageUrl: urlData.publicUrl,
+        observerName: name,
+        observerArea,
+        observerBirthDate: birthdate,
+        comment,
+        latitude: capturedImage.location.lat,
+        longitude: capturedImage.location.lng,
+        capturedAt: capturedImage.capturedAt,
+        storagePath, // cleanup 用
+      });
 
       if (result.success) {
-        toast.success(result.message);
+        toast.success("投稿が完了しました！");
         // フォームリセット
-        formRef.current?.reset(); //<form>要素内にあるname属性が付与されたinput要素（input,select,textarea）をリセット
+        formRef.current?.reset();
         setCapturedImage(null);
         setCategory("");
         setAgreed(false);
         setAddress("");
+        return { success: true, message: "投稿が完了しました" };
       } else {
-        toast.error(result.message);
+        // DB INSERT 失敗時は Server Action 内で Storage cleanup 済み
+        toast.error(result.error);
+        return { success: false, message: result.error };
       }
-      return result;
     } catch (error) {
       console.error("送信エラー:", error);
       const errorMessage =
