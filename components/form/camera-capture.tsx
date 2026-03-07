@@ -83,6 +83,20 @@ export function CameraCapture({
   );
 
   // ----------------------------------------------------------------
+  // [DEBUG] コンポーネントのマウント/再マウント検知
+  // Androidでカメラから戻った時にページが再読み込みされていないか確認
+  // ----------------------------------------------------------------
+  useEffect(() => {
+    const mountTime = new Date().toISOString();
+    console.log(`[DEBUG] CameraCapture MOUNTED at ${mountTime}`);
+    alert(`[DEBUG] コンポーネントマウント\n${mountTime}`); // 画面上で確認用
+
+    return () => {
+      console.log("[DEBUG] CameraCapture UNMOUNTED");
+    };
+  }, []);
+
+  // ----------------------------------------------------------------
   // 位置情報の継続的な追跡（watchPosition）
   // 以前はgetcurrentpositionにしていたが非同期処理の中で位置情報を取得する実装にしており、
   // その非同期処理の中でinput.click()でカメラを起動していたが、これがiOS Safariでブロックされるため、
@@ -141,9 +155,12 @@ export function CameraCapture({
   // 撮影ボタン押下時のハンドラ（同期関数 - iOS対応のため重要）
   // ----------------------------------------------------------------
   const handleCaptureClick = () => {
+    console.log("[DEBUG] handleCaptureClick called, capturedImage:", !!capturedImage);
+
     // 撮り直しの場合、先に既存画像への参照を解放（メモリ効率改善）
     // これによりGCが古い画像を解放可能な状態になる
     if (capturedImage) {
+      console.log("[DEBUG] 撮り直し - onCapture(null)呼び出し");
       onCapture(null);
     }
 
@@ -174,51 +191,72 @@ export function CameraCapture({
   // ファイル選択（撮影完了）時のハンドラ
   // ----------------------------------------------------------------
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    console.log("[DEBUG] handleFileChange called");
+    alert("[DEBUG] handleFileChange呼び出し"); // 画面上で確認用
 
-    // ファイルサイズチェック（圧縮前）
-    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      toast.error(`ファイルサイズは ${MAX_FILE_SIZE_MB}MB 以内にしてください`);
-      return;
+    try {
+      const file = e.target.files?.[0];
+      const fileInfo = file ? `${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)` : "なし";
+      console.log("[DEBUG] file:", fileInfo);
+      alert(`[DEBUG] ファイル: ${fileInfo}`); // 画面上で確認用
+
+      if (!file) {
+        console.log("[DEBUG] ファイルなし - return");
+        return;
+      }
+
+      // ファイルサイズチェック（圧縮前）
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        console.log("[DEBUG] ファイルサイズ超過");
+        toast.error(`ファイルサイズは ${MAX_FILE_SIZE_MB}MB 以内にしてください`);
+        return;
+      }
+
+      // watchPositionで追跡中の位置を使用（APIを呼ばない）
+      const location = currentLocation;
+      console.log("[DEBUG] location:", location);
+
+      // 位置情報が取得できなかった場合は警告
+      if (!location) {
+        console.log("[DEBUG] 位置情報なし - 警告表示");
+        toast.warning("位置情報を取得できませんでした。再度撮影してください。");
+      }
+
+      // 画像を圧縮
+      // [一時無効化] compressImageLibがメモリ不足の原因か確認中
+      // let compressedFile: File;
+      // try {
+      //   compressedFile = await compressImage(file);
+      //   console.log(
+      //     `圧縮: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(1)}MB`,
+      //   );
+      // } catch (error) {
+      //   console.error("圧縮エラー:", error);
+      //   toast.error("画像の圧縮に失敗しました");
+      //   return;
+      // }
+
+      // [一時対応] 圧縮せず元のファイルをそのまま使用
+      console.log(`[DEBUG] 元ファイル: ${(file.size / 1024 / 1024).toFixed(1)}MB（圧縮なし）`);
+
+      // 親コンポーネントにデータを返す
+      const capturedData: CapturedImage = {
+        previewUrl: "",
+        file: file, // 圧縮なしで元のファイルを使用
+        location,
+        capturedAt: new Date().toISOString(),
+      };
+      console.log("[DEBUG] onCapture呼び出し前");
+      onCapture(capturedData);
+      console.log("[DEBUG] onCapture呼び出し完了");
+
+      // リセット
+      e.target.value = "";
+      console.log("[DEBUG] handleFileChange完了");
+    } catch (error) {
+      console.error("[DEBUG] handleFileChangeでエラー:", error);
+      toast.error("撮影処理でエラーが発生しました");
     }
-
-    // watchPositionで追跡中の位置を使用（APIを呼ばない）
-    const location = currentLocation;
-
-    // 位置情報が取得できなかった場合は警告
-    if (!location) {
-      toast.warning("位置情報を取得できませんでした。再度撮影してください。");
-    }
-
-    // 画像を圧縮
-    // [一時無効化] compressImageLibがメモリ不足の原因か確認中
-    // let compressedFile: File;
-    // try {
-    //   compressedFile = await compressImage(file);
-    //   console.log(
-    //     `圧縮: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(1)}MB`,
-    //   );
-    // } catch (error) {
-    //   console.error("圧縮エラー:", error);
-    //   toast.error("画像の圧縮に失敗しました");
-    //   return;
-    // }
-
-    // [一時対応] 圧縮せず元のファイルをそのまま使用
-    console.log(`元ファイル: ${(file.size / 1024 / 1024).toFixed(1)}MB（圧縮なし）`);
-
-    // 親コンポーネントにデータを返す
-    const capturedData: CapturedImage = {
-      previewUrl: "",
-      file: file, // 圧縮なしで元のファイルを使用
-      location,
-      capturedAt: new Date().toISOString(),
-    };
-    onCapture(capturedData);
-
-    // リセット
-    e.target.value = "";
   };
 
   // ----------------------------------------------------------------
