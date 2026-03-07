@@ -34,8 +34,8 @@ import { ADDRESS_OPTIONS } from "@/lib/constants/prefectures";
 import { submitObservation } from "@/app/actions/observations";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Leaf, Mountain } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { resizeImage } from "@/lib/image/resize-image";
+import { uploadImageToStorage } from "@/lib/form/upload-image-to-storage";
 
 type SubmitResult = { success: boolean; message: string };
 
@@ -92,39 +92,30 @@ export function SubmitForm() {
 
       // ── Step 1: 画像リサイズ（クライアント側）──
       // WebP 優先、非対応端末は JPEG にフォールバック
+      //blob: リサイズされた画像データ,mimeType: 画像のMIMEタイプ,extension: 画像の拡張子
       const { blob, mimeType, extension } = await resizeImage(
         capturedImage.file,
         1200,
         0.8,
       );
 
-      // ── Step 2: Storage に直接アップロード（Client → Supabase Storage）──
-      const supabase = createSupabaseBrowserClient();
-      const uuid = crypto.randomUUID();
-      const sanitizedName = capturedImage.file.name
-        .replace(/[^a-zA-Z0-9.-]/g, "")
-        .replace(/\.[^.]+$/, "");
-      const storagePath = `${uuid}-${sanitizedName || "image"}.${extension}`;
+      // ── Step 2: Storage にアップロード & 公開URL取得 ──
+      const uploadResult = await uploadImageToStorage(
+        capturedImage.file.name,
+        blob,
+        mimeType,
+        extension,
+      );
 
-      const { error: uploadError } = await supabase.storage
-        .from("observations")
-        .upload(storagePath, blob, {
-          contentType: mimeType,
-          upsert: false,
-        });
-
-      if (uploadError) {
-        toast.error(`画像アップロード失敗: ${uploadError.message}`);
+      if (!uploadResult.success) {
+        toast.error(`画像アップロード失敗: ${uploadResult.error}`);
         return {
           success: false,
-          message: `画像アップロード失敗: ${uploadError.message}`,
+          message: `画像アップロード失敗: ${uploadResult.error}`,
         };
       }
 
-      // ── Step 3: 公開 URL を取得 ──
-      const { data: urlData } = supabase.storage
-        .from("observations")
-        .getPublicUrl(storagePath);
+      const { storagePath, publicUrl } = uploadResult;
 
       // ── Step 4: Server Action で DB INSERT ──
       const name = (formData.get("name") as string) || "匿名";
@@ -134,7 +125,7 @@ export function SubmitForm() {
 
       const result = await submitObservation({
         imageCategory: category,
-        imageUrl: urlData.publicUrl,
+        imageUrl: publicUrl,
         observerName: name,
         observerArea,
         observerBirthDate: birthdate,
